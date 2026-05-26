@@ -11,58 +11,61 @@ class AuthController extends Controller
 {
     /**
      * Connexion (admin uniquement)
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function login(Request $request)
-{
-    try {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+    {
+        try {
+            $request->validate([
+                'email' => 'required|email',
+                'password' => 'required',
+            ]);
 
-        $user = User::where('email', $request->email)->first();
+            $user = User::where('email', $request->email)->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
+            if (!$user || !Hash::check($request->password, $user->password)) {
+                return response()->json([
+                    'message' => 'Identifiants incorrects'
+                ], 401);
+            }
+
+            // 🔒 Vérifier que le compte est actif
+            if (!$user->est_actif) {
+                return response()->json([
+                    'message' => 'Votre compte est désactivé. Veuillez contacter l\'administrateur.'
+                ], 403);
+            }
+
+            $allowedRoles = ['superAdmin', 'adminAgence', 'dispatcher', 'chauffeur'];
+            if (!in_array($user->role_enum, $allowedRoles)) {
+                return response()->json([
+                    'message' => 'Accès non autorisé. Zone admin uniquement.'
+                ], 403);
+            }
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
             return response()->json([
-                'message' => 'Identifiants incorrects'
-            ], 401);
-        }
+                'user' => $user,
+                'token' => $token,
+                'role' => $user->role_enum,
+            ]);
 
-        $allowedRoles = ['superAdmin', 'adminAgence', 'dispatcher', 'chauffeur'];
-        if (!in_array($user->role_enum, $allowedRoles)) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
-                'message' => 'Accès non autorisé. Zone admin uniquement.'
-            ], 403);
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ], 500);
         }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'user' => $user,
-            'token' => $token,
-            'role' => $user->role_enum,
-        ]);
-
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json([
-            'errors' => $e->errors()
-        ], 422);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage(),
-            'line' => $e->getLine(),
-            'file' => $e->getFile()
-        ], 500);
     }
-}
 
     /**
      * Utilisateur connecté
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function me(Request $request)
     {
@@ -84,8 +87,6 @@ class AuthController extends Controller
 
     /**
      * Déconnexion
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
      */
     public function logout(Request $request)
     {

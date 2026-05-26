@@ -137,63 +137,64 @@ class UserController extends Controller
      * Créer un dispatcher (admin_agence ou super_admin)
      */
     public function storeDispatcher(Request $request)
-{
-    try {
-        $user = $request->user();
+    {
+        try {
+            $user = $request->user();
 
-        if (!$this->isSuperAdmin($user) && !$this->isAdminAgence($user)) {
-            return response()->json(['message' => 'Accès non autorisé'], 403);
-        }
-
-        // Déterminer l'Idagence
-        if ($this->isSuperAdmin($user)) {
-            // Super admin doit fournir Idagence
-            if (!$request->Idagence) {
-                return response()->json(['message' => 'Idagence requis pour super_admin'], 422);
+            if (!$this->isSuperAdmin($user) && !$this->isAdminAgence($user)) {
+                return response()->json(['message' => 'Accès non autorisé'], 403);
             }
-            $agenceId = $request->Idagence;
-        } else {
-            // Admin agence : utiliser son propre Idagence
-            $agenceId = $user->Idagence;
+
+            // Déterminer l'Idagence
+            if ($this->isSuperAdmin($user)) {
+                // Super admin doit fournir Idagence
+                if (!$request->Idagence) {
+                    return response()->json(['message' => 'Idagence requis pour super_admin'], 422);
+                }
+                $agenceId = $request->Idagence;
+            } else {
+                // Admin agence : utiliser son propre Idagence
+                $agenceId = $user->Idagence;
+            }
+
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'prenom' => 'nullable|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:6|confirmed',
+                'telephone' => 'required|string|max:20',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $newUser = User::create([
+                'name' => $request->name,
+                'prenom' => $request->prenom ?? '',
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'telephone' => $request->telephone,
+                'role_enum' => 'dispatcher',
+                'photo' => 'default-avatar.png',
+                'Idagence' => $agenceId,
+            ]);
+
+            return response()->json([
+                'message' => 'Dispatcher créé avec succès',
+                'user' => $newUser
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ], 500);
         }
-
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'prenom' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6|confirmed',
-            'telephone' => 'required|string|max:20',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
-
-        $newUser = User::create([
-            'name' => $request->name,
-            'prenom' => $request->prenom ?? '',
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'telephone' => $request->telephone,
-            'role_enum' => 'dispatcher',
-            'photo' => 'default-avatar.png',
-            'Idagence' => $agenceId,
-        ]);
-
-        return response()->json([
-            'message' => 'Dispatcher créé avec succès',
-            'user' => $newUser
-        ], 201);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'error' => $e->getMessage(),
-            'line' => $e->getLine(),
-            'file' => $e->getFile()
-        ], 500);
     }
-}
+
     /**
      * Modifier un utilisateur
      */
@@ -267,6 +268,49 @@ class UserController extends Controller
             $targetUser->delete();
 
             return response()->json(['message' => 'Utilisateur supprimé avec succès']);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ], 500);
+        }
+    }
+
+    /**
+    /**
+ * Activer/Désactiver un compte utilisateur (admin uniquement)
+ */
+    public function toggleStatus(Request $request, $id)
+    {
+        try {
+            $user = $request->user();
+            $targetUser = User::findOrFail($id);
+
+            // 1. Vérifier les droits d’accès à l’utilisateur cible (agence)
+            if (!$this->isSuperAdmin($user) && $targetUser->Idagence !== $user->Idagence) {
+                return response()->json(['message' => 'Accès non autorisé'], 403);
+            }
+
+            // 2. 🔒 Un admin_agence ne peut pas désactiver un autre admin_agence
+            if ($this->isAdminAgence($user) && $targetUser->role_enum === 'adminAgence') {
+                return response()->json([
+                    'message' => 'Vous ne pouvez pas désactiver un autre administrateur d\'agence'
+                ], 403);
+            }
+
+            // 3. Inverser le statut
+            $targetUser->est_actif = !$targetUser->est_actif;
+            $targetUser->save();
+
+            $status = $targetUser->est_actif ? 'activé' : 'désactivé';
+
+            return response()->json([
+                'message' => "Compte {$status} avec succès",
+                'user' => $targetUser
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([

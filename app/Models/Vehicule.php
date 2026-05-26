@@ -21,6 +21,9 @@ class Vehicule extends Model
         'couleur',
         'annee',
         'Capacite',
+        'CapacitePassagers',
+        'CapacitePoids',
+        'VolumeBagages',
         'statut_enum',
         'Date_Expir_Assurance',
         'visiteTech',
@@ -32,6 +35,8 @@ class Vehicule extends Model
         'annee' => 'datetime',
         'Date_Expir_Assurance' => 'datetime',
         'visiteTech' => 'datetime',
+        'CapacitePoids' => 'decimal:2',
+        'VolumeBagages' => 'decimal:2',
     ];
 
     // Relations

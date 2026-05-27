@@ -18,24 +18,23 @@ return new class extends Migration
         // 3. Mettre à jour les telephone NULL → valeur temporaire (si existant)
         DB::table('users')->whereNull('telephone')->update(['telephone' => '00000000']);
 
-        // 4. Modifier telephone (obligatoire)
-        DB::statement('ALTER TABLE users MODIFY telephone VARCHAR(20) NOT NULL');
-
-        // 5. Modifier role_enum (enlever 'client', défaut 'chauffeur')
-        DB::statement("ALTER TABLE users MODIFY role_enum ENUM('superAdmin', 'adminAgence', 'dispatcher', 'chauffeur') NOT NULL DEFAULT 'chauffeur'");
-
-        // 6. Modifier photo (défaut 'default-avatar.png')
-        DB::statement("ALTER TABLE users MODIFY photo VARCHAR(255) NOT NULL DEFAULT 'default-avatar.png'");
-
-        // 7. Modifier prenom (défaut chaîne vide)
-        DB::statement('ALTER TABLE users MODIFY prenom VARCHAR(100) NOT NULL DEFAULT ""');
+        // Utiliser le Schema Builder de Laravel pour la portabilité (notamment SQLite)
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('telephone', 20)->nullable(false)->change();
+            // Utiliser string pour role_enum pour la compatibilité maximale SQLite/MySQL
+            $table->string('role_enum')->default('chauffeur')->change();
+            $table->string('photo', 255)->default('default-avatar.png')->nullable(false)->change();
+            $table->string('prenom', 100)->default('')->nullable(false)->change();
+        });
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE users MODIFY telephone VARCHAR(20) NULL');
-        DB::statement("ALTER TABLE users MODIFY role_enum ENUM('superAdmin', 'adminAgence', 'dispatcher', 'chauffeur', 'client') NOT NULL DEFAULT 'client'");
-        DB::statement('ALTER TABLE users MODIFY photo VARCHAR(255) NULL');
-        DB::statement('ALTER TABLE users MODIFY prenom VARCHAR(100) NULL');
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('telephone', 20)->nullable()->change();
+            $table->string('role_enum')->default('client')->change();
+            $table->string('photo', 255)->nullable()->change();
+            $table->string('prenom', 100)->nullable()->change();
+        });
     }
 };

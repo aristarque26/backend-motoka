@@ -27,7 +27,8 @@ class Course extends Model
         'statut_enum',
         'Idclient',
         'Idchauffeur',
-        'Idvehicule'
+        'Idvehicule',
+        'Idagence'
     ];
 
     protected $casts = [

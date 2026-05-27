@@ -7,6 +7,8 @@ use App\Http\Controllers\API\AgenceController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ChauffeurController;
 use App\Http\Controllers\API\VehiculeController;
+use App\Http\Controllers\API\CourseControlleur;
+use App\Http\Controllers\API\ColisController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -92,8 +94,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/vehicules/{id}/remettre-service', [VehiculeController::class, 'remettreEnService']);
     Route::put('/vehicules/{id}/kilometrage', [VehiculeController::class, 'updateKilometrage']);
     
+    // Actions sur les courses
+    Route::post('/courses/{id}/colis', [CourseControlleur::class, 'attacherColis']);
+
     // CRUD standard
     Route::apiResource('vehicules', VehiculeController::class);
+    Route::apiResource('courses', CourseControlleur::class);
+    Route::apiResource('colis', ColisController::class);
     
     // Dashboard (optionnel)
     Route::get('/dashboard', function () {

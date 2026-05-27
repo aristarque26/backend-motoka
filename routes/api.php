@@ -52,6 +52,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Gestion des agences (super_admin uniquement)
     Route::apiResource('agences', AgenceController::class);
     
+    // Gestion des succursales
+    Route::apiResource('succursales', \App\Http\Controllers\API\SuccursaleController::class);
+    
     // Gestion des utilisateurs (admin_agence, dispatcher)
     Route::get('/admin/users', [UserController::class, 'index']);
     Route::get('/admin/users/{id}', [UserController::class, 'show']);

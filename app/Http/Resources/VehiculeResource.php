@@ -36,6 +36,8 @@ class VehiculeResource extends JsonResource
             'kilometrage' => $this->kilometrage,
             'agence_id' => $this->Idagence,
             'agence' => new AgenceResource($this->whenLoaded('agence')),
+            'succursale_id' => $this->Idsuccursale,
+            'succursale' => $this->whenLoaded('succursale'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

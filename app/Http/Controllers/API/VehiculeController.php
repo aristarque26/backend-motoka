@@ -44,7 +44,7 @@ class VehiculeController extends Controller
             return response()->json(['message' => 'Accès non autorisé'], 403);
         }
 
-        $query = Vehicule::with('agence');
+        $query = Vehicule::with('agence', 'succursale');
 
         if ($user->role_enum !== 'superAdmin') {
             $query->where('Idagence', $user->Idagence);
@@ -81,7 +81,7 @@ class VehiculeController extends Controller
             return response()->json(['message' => 'Accès non autorisé'], 403);
         }
 
-        return new VehiculeResource($vehicule->load('agence'));
+        return new VehiculeResource($vehicule->load('agence', 'succursale'));
     }
 
     /**

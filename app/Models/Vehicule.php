@@ -28,7 +28,8 @@ class Vehicule extends Model
         'Date_Expir_Assurance',
         'visiteTech',
         'kilometrage',
-        'Idagence'
+        'Idagence',
+        'Idsuccursale'
     ];
 
     protected $casts = [
@@ -43,6 +44,11 @@ class Vehicule extends Model
     public function agence()
     {
         return $this->belongsTo(Agence::class, 'Idagence', 'Idagence');
+    }
+
+    public function succursale()
+    {
+        return $this->belongsTo(Succursale::class, 'Idsuccursale', 'Idsuccursale');
     }
 
     public function maintenances()

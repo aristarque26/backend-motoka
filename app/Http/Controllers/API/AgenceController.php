@@ -84,14 +84,15 @@ class AgenceController extends Controller
         $validator = Validator::make($request->all(), [
             // Agence
             'agence_nom' => 'required|string|max:100',
-            'agence_slug' => 'required|string|max:100|unique:agences,slug',
+            'agence_slug' => 'nullable|string|max:100|unique:agences,slug',
             'agence_email' => 'required|email|unique:agences,email',
             'agence_telephone' => 'required|string|max:20',
+            'agence_adresse' => 'nullable|string|max:255',
             
             // Admin
             'admin_name' => 'required|string|max:255',
             'admin_email' => 'required|email|unique:users,email',
-            'admin_password' => 'required|min:6|confirmed',
+            'admin_password' => 'required|min:6',
             'admin_telephone' => 'required|string|max:20',
         ]);
 
@@ -101,13 +102,24 @@ class AgenceController extends Controller
 
         try {
             return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+                // Générer le slug si non fourni
+                $slug = $request->agence_slug ?: \Illuminate\Support\Str::slug($request->agence_nom);
+                
+                // S'assurer que le slug est unique (si généré)
+                $originalSlug = $slug;
+                $count = 1;
+                while (\App\Models\Agence::where('slug', $slug)->exists()) {
+                    $slug = $originalSlug . '-' . $count++;
+                }
+
                 // 1. Créer l'agence
                 $agence = Agence::create([
                     'nom' => $request->agence_nom,
-                    'slug' => $request->agence_slug,
+                    'slug' => $slug,
                     'email' => $request->agence_email,
                     'telephone' => $request->agence_telephone,
-                    'plan_enum' => 'starter',
+                    'adresse' => $request->agence_adresse,
+                    'plan_enum' => $request->plan_enum ?? 'starter',
                     'statut_enum' => 'actif',
                 ]);
 
@@ -125,7 +137,8 @@ class AgenceController extends Controller
                 return response()->json([
                     'message' => 'Agence et administrateur créés avec succès',
                     'agence' => $agence,
-                    'admin' => $admin
+                    'admin' => $admin,
+                    'token' => $admin->createToken('auth_token')->plainTextToken,
                 ], 201);
             });
         } catch (\Exception $e) {

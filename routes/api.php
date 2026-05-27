@@ -25,6 +25,7 @@ Route::get('/test', function () {
 });
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register-agence', [AgenceController::class, 'registerFull']);
 
 // =============================================
 // ROUTE DE DIAGNOSTIC (TEMPORAIRE)

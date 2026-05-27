@@ -78,6 +78,64 @@ class AgenceController extends Controller
         }
     }
 
+    // Créer une agence et son administrateur (SaaS Registration)
+    public function registerFull(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            // Agence
+            'agence_nom' => 'required|string|max:100',
+            'agence_slug' => 'required|string|max:100|unique:agences,slug',
+            'agence_email' => 'required|email|unique:agences,email',
+            'agence_telephone' => 'required|string|max:20',
+            
+            // Admin
+            'admin_name' => 'required|string|max:255',
+            'admin_email' => 'required|email|unique:users,email',
+            'admin_password' => 'required|min:6|confirmed',
+            'admin_telephone' => 'required|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        try {
+            return \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+                // 1. Créer l'agence
+                $agence = Agence::create([
+                    'nom' => $request->agence_nom,
+                    'slug' => $request->agence_slug,
+                    'email' => $request->agence_email,
+                    'telephone' => $request->agence_telephone,
+                    'plan_enum' => 'starter',
+                    'statut_enum' => 'actif',
+                ]);
+
+                // 2. Créer l'administrateur
+                $admin = \App\Models\User::create([
+                    'name' => $request->admin_name,
+                    'email' => $request->admin_email,
+                    'password' => \Illuminate\Support\Facades\Hash::make($request->admin_password),
+                    'telephone' => $request->admin_telephone,
+                    'role_enum' => 'adminAgence',
+                    'Idagence' => $agence->Idagence,
+                    'est_actif' => true,
+                ]);
+
+                return response()->json([
+                    'message' => 'Agence et administrateur créés avec succès',
+                    'agence' => $agence,
+                    'admin' => $admin
+                ], 201);
+            });
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Erreur lors de la création',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     // Modifier une agence (super_admin uniquement)
     public function update(Request $request, $id)
     {

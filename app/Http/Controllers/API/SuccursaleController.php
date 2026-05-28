@@ -53,6 +53,17 @@ class SuccursaleController extends Controller
             ['Idagence' => $agenceId]
         ));
 
+        // Si un manager est assigné, on met à jour son profil
+        if ($request->Idmanager) {
+            $manager = \App\Models\User::find($request->Idmanager);
+            if ($manager && $manager->Idagence === $agenceId) {
+                $manager->update([
+                    'Idsuccursale' => $succursale->Idsuccursale,
+                    'role_enum' => 'adminSuccursale'
+                ]);
+            }
+        }
+
         return response()->json($succursale, 201);
     }
 
@@ -85,7 +96,23 @@ class SuccursaleController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
+        $oldManagerId = $succursale->Idmanager;
         $succursale->update($validator->validated());
+
+        // Si le manager a changé
+        if ($request->has('Idmanager') && $request->Idmanager != $oldManagerId) {
+            // Ancien manager : on peut éventuellement réinitialiser son rôle ou le laisser tel quel
+            // Nouveau manager
+            if ($request->Idmanager) {
+                $newManager = \App\Models\User::find($request->Idmanager);
+                if ($newManager && $newManager->Idagence === $succursale->Idagence) {
+                    $newManager->update([
+                        'Idsuccursale' => $succursale->Idsuccursale,
+                        'role_enum' => 'adminSuccursale'
+                    ]);
+                }
+            }
+        }
 
         return response()->json($succursale);
     }

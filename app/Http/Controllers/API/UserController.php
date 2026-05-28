@@ -280,7 +280,7 @@ class UserController extends Controller
                 'email' => 'sometimes|email|unique:users,email,' . $id,
                 'telephone' => 'sometimes|string|max:20',
                 'password' => 'sometimes|min:6|confirmed',
-                'role_enum' => 'sometimes|in:adminAgence,dispatcher,chauffeur',
+                'role_enum' => 'sometimes|in:adminAgence,dispatcher,chauffeur,adminSuccursale,comptable',
                 'Idagence' => 'sometimes|exists:agences,Idagence',
             ]);
 

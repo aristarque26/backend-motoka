@@ -40,9 +40,9 @@ class UserController extends Controller
             $user = $request->user();
 
             if ($this->isSuperAdmin($user)) {
-                $users = User::with('agence')->paginate(20);
+                $users = User::with(['agence', 'succursale'])->paginate(20);
             } elseif ($this->isAdminAgence($user)) {
-                $users = User::query()->where('Idagence', $user->Idagence)->paginate(20);
+                $users = User::with('succursale')->where('Idagence', $user->Idagence)->paginate(20);
             } else {
                 return response()->json(['message' => 'Accès non autorisé'], 403);
             }
@@ -163,10 +163,20 @@ class UserController extends Controller
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|min:6|confirmed',
                 'telephone' => 'required|string|max:20',
+                'role_enum' => 'nullable|string|in:dispatcher,comptable,chauffeur',
+                'Idsuccursale' => 'nullable|exists:succursales,Idsuccursale',
             ]);
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            // Vérifier que la succursale fait bien partie de l'agence pour un adminAgence
+            if ($request->filled('Idsuccursale') && $this->isAdminAgence($user)) {
+                $succursale = \App\Models\Succursale::findOrFail($request->Idsuccursale);
+                if ($succursale->Idagence !== $user->Idagence) {
+                    return response()->json(['message' => 'La succursale ne fait pas partie de votre agence'], 403);
+                }
             }
 
             $newUser = User::create([
@@ -175,13 +185,14 @@ class UserController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'telephone' => $request->telephone,
-                'role_enum' => 'dispatcher',
+                'role_enum' => $request->role_enum ?? 'dispatcher',
                 'photo' => 'default-avatar.png',
                 'Idagence' => $agenceId,
+                'Idsuccursale' => $request->Idsuccursale,
             ]);
 
             return response()->json([
-                'message' => 'Dispatcher créé avec succès',
+                'message' => 'Collaborateur créé avec succès',
                 'user' => $newUser
             ], 201);
 
@@ -282,10 +293,19 @@ class UserController extends Controller
                 'password' => 'sometimes|min:6|confirmed',
                 'role_enum' => 'sometimes|in:adminAgence,dispatcher,chauffeur,adminSuccursale,comptable',
                 'Idagence' => 'sometimes|exists:agences,Idagence',
+                'Idsuccursale' => 'sometimes|nullable|exists:succursales,Idsuccursale',
             ]);
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            // Vérifier que la succursale fait bien partie de l'agence pour un adminAgence
+            if ($request->has('Idsuccursale') && $request->Idsuccursale !== null && $this->isAdminAgence($user)) {
+                $succursale = \App\Models\Succursale::findOrFail($request->Idsuccursale);
+                if ($succursale->Idagence !== $user->Idagence) {
+                    return response()->json(['message' => 'La succursale ne fait pas partie de votre agence'], 403);
+                }
             }
 
             $data = $request->all();

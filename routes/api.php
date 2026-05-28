@@ -60,6 +60,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/admin/users/{id}', [UserController::class, 'show']);
     Route::post('/admin/users/admin-agence', [UserController::class, 'storeAdminAgence']);
     Route::post('/admin/users/dispatcher', [UserController::class, 'storeDispatcher']);
+    Route::post('/admin/users/admin-succursale', [UserController::class, 'storeAdminSuccursale']);
     Route::put('/admin/users/{id}', [UserController::class, 'update']);
     Route::delete('/admin/users/{id}', [UserController::class, 'destroy']);
     

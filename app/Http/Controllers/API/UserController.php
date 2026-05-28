@@ -196,6 +196,72 @@ class UserController extends Controller
     }
 
     /**
+     * Créer un admin_succursale (admin_agence ou super_admin)
+     */
+    public function storeAdminSuccursale(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            // Only superAdmin or adminAgence can create an adminSuccursale
+            if (!$this->isSuperAdmin($user) && !$this->isAdminAgence($user)) {
+                return response()->json(['message' => 'Accès non autorisé'], 403);
+            }
+
+            // Determine Idagence
+            $agenceId = $this->isSuperAdmin($user) ? $request->Idagence : $user->Idagence;
+
+            // Validate request
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:255',
+                'prenom' => 'nullable|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:6|confirmed',
+                'telephone' => 'required|string|max:20',
+                'Idagence' => $this->isSuperAdmin($user) ? 'required|exists:agences,Idagence' : 'nullable',
+                'Idsuccursale' => 'required|exists:succursales,Idsuccursale',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            // Check if the provided succursale belongs to the agency (for adminAgence)
+            if ($this->isAdminAgence($user)) {
+                $succursale = \App\Models\Succursale::findOrFail($request->Idsuccursale);
+                if ($succursale->Idagence !== $user->Idagence) {
+                    return response()->json(['message' => 'La succursale ne fait pas partie de votre agence'], 403);
+                }
+            }
+
+            $newUser = User::create([
+                'name' => $request->name,
+                'prenom' => $request->prenom ?? '',
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'telephone' => $request->telephone,
+                'role_enum' => 'adminSuccursale',
+                'photo' => 'default-avatar.png',
+                'Idagence' => $agenceId,
+                'Idsuccursale' => $request->Idsuccursale,
+            ]);
+
+            return response()->json([
+                'message' => 'Admin succursale créé avec succès',
+                'user' => $newUser
+            ], 201);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
+            ], 500);
+        }
+    }
+
+    /**
      * Modifier un utilisateur
      */
     public function update(Request $request, $id)

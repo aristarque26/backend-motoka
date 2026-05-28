@@ -35,7 +35,7 @@ class AuthController extends Controller
                 ], 403);
             }
 
-            $allowedRoles = ['superAdmin', 'adminAgence', 'dispatcher', 'chauffeur'];
+            $allowedRoles = ['superAdmin', 'adminAgence', 'dispatcher', 'chauffeur', 'adminSuccursale'];
             if (!in_array($user->role_enum, $allowedRoles)) {
                 return response()->json([
                     'message' => 'Accès non autorisé. Zone admin uniquement.'
@@ -72,8 +72,17 @@ class AuthController extends Controller
         try {
             $user = $request->user('sanctum');
             
-            if ($user && $user->role_enum === 'chauffeur') {
-                $user->load('chauffeur');
+            if ($user) {
+                // Toujours charger la succursale si l'utilisateur en a une
+                $user->load('succursale');
+                // Charger l'agence si ce n'est pas un superAdmin (déjà fait implicitement via Idagence si présente)
+                if ($user->role_enum !== 'superAdmin') {
+                    $user->load('agence');
+                }
+                // Charger chauffeur uniquement si le rôle est chauffeur
+                if ($user->role_enum === 'chauffeur') {
+                    $user->load('chauffeur');
+                }
             }
             
             return response()->json($user);

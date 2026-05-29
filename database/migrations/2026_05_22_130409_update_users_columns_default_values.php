@@ -5,36 +5,47 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
+class UpdateUsersColumnsDefaultValues extends Migration
 {
     public function up(): void
     {
-        // 1. Mettre à jour les lignes existantes (photo NULL → default-avatar.png)
+        // Mise à jour des valeurs NULL
         DB::table('users')->whereNull('photo')->update(['photo' => 'default-avatar.png']);
-
-        // 2. Mettre à jour les prenom NULL → chaîne vide
         DB::table('users')->whereNull('prenom')->update(['prenom' => '']);
-
-        // 3. Mettre à jour les telephone NULL → valeur temporaire (si existant)
         DB::table('users')->whereNull('telephone')->update(['telephone' => '00000000']);
 
-        // Utiliser le Schema Builder de Laravel pour la portabilité (notamment SQLite)
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('telephone', 20)->nullable(false)->change();
-            // Utiliser string pour role_enum pour la compatibilité maximale SQLite/MySQL
-            $table->string('role_enum')->default('chauffeur')->change();
-            $table->string('photo', 255)->default('default-avatar.png')->nullable(false)->change();
-            $table->string('prenom', 100)->default('')->nullable(false)->change();
-        });
+        if (DB::getDriverName() === 'mysql') {
+            // ✅ Syntaxe MySQL
+            DB::statement('ALTER TABLE users MODIFY telephone VARCHAR(20) NOT NULL');
+            DB::statement("ALTER TABLE users MODIFY role_enum ENUM('superAdmin','adminAgence','dispatcher','chauffeur') NOT NULL DEFAULT 'chauffeur'");
+            DB::statement("ALTER TABLE users MODIFY photo VARCHAR(255) NOT NULL DEFAULT 'default-avatar.png'");
+            DB::statement('ALTER TABLE users MODIFY prenom VARCHAR(100) NOT NULL DEFAULT ""');
+        } elseif (DB::getDriverName() === 'sqlite') {
+            // ✅ Syntaxe SQLite (pas de MODIFY, on utilise Schema::table + change())
+            Schema::table('users', function (Blueprint $table) {
+                $table->string('telephone', 20)->default('00000000')->nullable(false)->change();
+                $table->string('role_enum')->default('chauffeur')->change();
+                $table->string('photo')->default('default-avatar.png')->change();
+                $table->string('prenom', 100)->default('')->change();
+            });
+        }
     }
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->string('telephone', 20)->nullable()->change();
-            $table->string('role_enum')->default('client')->change();
-            $table->string('photo', 255)->nullable()->change();
-            $table->string('prenom', 100)->nullable()->change();
-        });
+        if (DB::getDriverName() === 'mysql') {
+    DB::statement('ALTER TABLE users MODIFY telephone VARCHAR(20) NULL');
+    DB::statement("ALTER TABLE users MODIFY role_enum ENUM('superAdmin','adminAgence','dispatcher','chauffeur','client') NOT NULL DEFAULT 'client'");
+    DB::statement('ALTER TABLE users MODIFY photo VARCHAR(255) NULL');
+    DB::statement('ALTER TABLE users MODIFY prenom VARCHAR(100) NULL');
+} elseif (DB::getDriverName() === 'sqlite') {
+    Schema::table('users', function (Blueprint $table) {
+        $table->string('telephone', 20)->nullable()->change();
+        $table->string('role_enum')->default('client')->change();
+        $table->string('photo')->nullable()->change();
+        $table->string('prenom', 100)->nullable()->change();
+    });
+}
+
     }
-};
+}

@@ -10,12 +10,15 @@ class SuperAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-            'name' => 'Super Admin',
-            'email' => 'admin@motoka.com',
-            'password' => Hash::make('motoka1234'),
-            'telephone' => '977356358',
-            'role_enum' => 'superAdmin',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'admin@motoka.com'], // condition de recherche
+            [
+                'name' => 'Super Admin',
+                'password' => Hash::make('motoka1234'),
+                'telephone' => '977356358',
+                'role_enum' => 'superAdmin',
+                'est_actif' => true,
+            ]
+        );
     }
 }

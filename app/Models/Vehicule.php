@@ -28,6 +28,8 @@ class Vehicule extends Model
         'Date_Expir_Assurance',
         'visiteTech',
         'kilometrage',
+        'proprietaire_type',
+        'Idchauffeur',
         'Idagence',
         'Idsuccursale'
     ];
@@ -49,6 +51,11 @@ class Vehicule extends Model
     public function succursale()
     {
         return $this->belongsTo(Succursale::class, 'Idsuccursale', 'Idsuccursale');
+    }
+
+    public function proprietaire()
+    {
+        return $this->belongsTo(Chauffeur::class, 'Idchauffeur', 'Idchauffeur');
     }
 
     public function maintenances()

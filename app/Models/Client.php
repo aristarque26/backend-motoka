@@ -22,7 +22,8 @@ class Client extends Model
         'ville',
         'addresseClient',
         'typeClient_ENUM',
-        'Idutilisateur'
+        'Idutilisateur',
+        'Idagence'
     ];
 
     protected $casts = [

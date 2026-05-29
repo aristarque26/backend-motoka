@@ -193,6 +193,7 @@ class ChauffeurController extends Controller
                 'adresse' => 'nullable|string',
                 'numeroPermis' => 'sometimes|string|unique:chauffeurs,numeroPermis,' . ($chauffeurUser->chauffeur->Idchauffeur ?? 0),
                 'statut_Enum' => 'sometimes|in:dispo,en_course,conge,suspendu',
+                'type_contrat' => 'sometimes|in:salarie,adherent',
                 'salaireBase' => 'sometimes|numeric|min:0',
                 'commission' => 'sometimes|numeric|min:0|max:100',
             ]);
@@ -217,7 +218,7 @@ class ChauffeurController extends Controller
             if ($chauffeurUser->chauffeur) {
                 $chauffeurUser->chauffeur->update($request->only([
                     'nomChauffeur', 'telephone', 'adresse', 'numeroPermis',
-                    'statut_Enum', 'salaireBase', 'commission'
+                    'statut_Enum', 'type_contrat', 'salaireBase', 'commission'
                 ]));
             } else {
                 // Si la fiche n'existe pas encore, on la crée
@@ -228,6 +229,7 @@ class ChauffeurController extends Controller
                     'numeroPermis' => $request->numeroPermis,
                     'DateValidite' => $request->DateValidite ?? now()->addYears(5),
                     'statut_Enum' => $request->statut_Enum ?? 'dispo',
+                    'type_contrat' => $request->type_contrat ?? 'salarie',
                     'salaireBase' => $request->salaireBase ?? 0,
                     'DateEmbauche' => now(),
                     'commission' => $request->commission ?? 0,

@@ -7,6 +7,8 @@ use App\Http\Controllers\API\AgenceController;
 use App\Http\Controllers\API\UserController;
 use App\Http\Controllers\API\ChauffeurController;
 use App\Http\Controllers\API\VehiculeController;
+use App\Http\Controllers\API\CourseControlleur;
+use App\Http\Controllers\API\ColisController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -23,6 +25,7 @@ Route::get('/test', function () {
 });
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register-agence', [AgenceController::class, 'registerFull']);
 
 // =============================================
 // ROUTE DE DIAGNOSTIC (TEMPORAIRE)
@@ -49,11 +52,15 @@ Route::middleware('auth:sanctum')->group(function () {
     // Gestion des agences (super_admin uniquement)
     Route::apiResource('agences', AgenceController::class);
     
+    // Gestion des succursales
+    Route::apiResource('succursales', \App\Http\Controllers\API\SuccursaleController::class);
+    
     // Gestion des utilisateurs (admin_agence, dispatcher)
     Route::get('/admin/users', [UserController::class, 'index']);
     Route::get('/admin/users/{id}', [UserController::class, 'show']);
     Route::post('/admin/users/admin-agence', [UserController::class, 'storeAdminAgence']);
     Route::post('/admin/users/dispatcher', [UserController::class, 'storeDispatcher']);
+    Route::post('/admin/users/admin-succursale', [UserController::class, 'storeAdminSuccursale']);
     Route::put('/admin/users/{id}', [UserController::class, 'update']);
     Route::delete('/admin/users/{id}', [UserController::class, 'destroy']);
     
@@ -92,8 +99,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/vehicules/{id}/remettre-service', [VehiculeController::class, 'remettreEnService']);
     Route::put('/vehicules/{id}/kilometrage', [VehiculeController::class, 'updateKilometrage']);
     
+    // Actions sur les courses
+    Route::post('/courses/{id}/colis', [CourseControlleur::class, 'attacherColis']);
+
     // CRUD standard
     Route::apiResource('vehicules', VehiculeController::class);
+    Route::apiResource('courses', CourseControlleur::class);
+    Route::apiResource('colis', ColisController::class);
     
     // Dashboard (optionnel)
     Route::get('/dashboard', function () {

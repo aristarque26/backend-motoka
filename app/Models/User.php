@@ -26,6 +26,7 @@ class User extends Authenticatable
         'role_enum',
         'photo',
         'Idagence',
+        'Idsuccursale',
         'est_actif'
     ];
 
@@ -43,6 +44,11 @@ class User extends Authenticatable
     public function agence()
     {
         return $this->belongsTo(Agence::class, 'Idagence', 'Idagence');
+    }
+
+    public function succursale()
+    {
+        return $this->belongsTo(Succursale::class, 'Idsuccursale', 'Idsuccursale');
     }
 
     public function client()

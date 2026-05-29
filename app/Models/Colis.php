@@ -26,7 +26,8 @@ class Colis extends Model
         'Signature_Url',
         'Description',
         'Poids',
-        'Idclient'
+        'Idclient',
+        'Idagence'
     ];
 
     protected $casts = [

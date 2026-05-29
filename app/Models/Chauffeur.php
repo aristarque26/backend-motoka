@@ -22,6 +22,7 @@ class Chauffeur extends Model
         'photo',
         'DateValidite',
         'statut_Enum',
+        'type_contrat',
         'salaireBase',
         'DateEmbauche',
         'commission',
@@ -55,6 +56,11 @@ class Chauffeur extends Model
     public function courses()
     {
         return $this->hasMany(Course::class, 'Idchauffeur', 'Idchauffeur');
+    }
+
+    public function vehiculesPossedes()
+    {
+        return $this->hasMany(Vehicule::class, 'Idchauffeur', 'Idchauffeur');
     }
 
     public function salaires()

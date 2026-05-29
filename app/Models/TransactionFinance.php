@@ -9,13 +9,14 @@ class TransactionFinance extends Model
 {
     use HasFactory;
 
-    protected $table = 'transaction_finances';
+    protected $table = 'transactions_finances';
     protected $primaryKey = 'IdTransactionFinance';
     public $incrementing = true;
     protected $keyType = 'int';
 
     protected $fillable = [
         'montant',
+        'devise',
         'mode_paiement_Enum',
         'Type_Transaction_Enum',
         'Date_Paiement',

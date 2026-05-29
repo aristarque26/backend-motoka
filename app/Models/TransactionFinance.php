@@ -9,7 +9,7 @@ class TransactionFinance extends Model
 {
     use HasFactory;
 
-    protected $table = 'transaction_finances';
+    protected $table = 'transactions_finances';
     protected $primaryKey = 'IdTransactionFinance';
     public $incrementing = true;
     protected $keyType = 'int';

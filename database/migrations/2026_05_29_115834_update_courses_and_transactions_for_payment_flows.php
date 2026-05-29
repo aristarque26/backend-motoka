@@ -18,7 +18,7 @@ return new class extends Migration
             $table->enum('paye_a', ['chauffeur', 'agence'])->default('agence')->after('montant_agence');
         });
 
-        Schema::table('transaction_finances', function (Blueprint $table) {
+        Schema::table('transactions_finances', function (Blueprint $table) {
             $table->string('devise', 3)->default('CDF')->after('montant');
         });
     }
@@ -32,7 +32,7 @@ return new class extends Migration
             $table->dropColumn(['frais_fret', 'montant_chauffeur', 'montant_agence', 'paye_a']);
         });
 
-        Schema::table('transaction_finances', function (Blueprint $table) {
+        Schema::table('transactions_finances', function (Blueprint $table) {
             $table->dropColumn('devise');
         });
     }

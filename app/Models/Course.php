@@ -24,6 +24,10 @@ class Course extends Model
         'Distance_Km',
         'PrixEstime',
         'PrixReel',
+        'frais_fret',
+        'montant_chauffeur',
+        'montant_agence',
+        'paye_a',
         'statut_enum',
         'Idclient',
         'Idchauffeur',
@@ -39,6 +43,9 @@ class Course extends Model
         'Distance_Km' => 'decimal:2',
         'PrixEstime' => 'decimal:2',
         'PrixReel' => 'decimal:2',
+        'frais_fret' => 'decimal:2',
+        'montant_chauffeur' => 'decimal:2',
+        'montant_agence' => 'decimal:2',
     ];
 
     // Relations

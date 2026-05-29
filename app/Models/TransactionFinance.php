@@ -16,6 +16,7 @@ class TransactionFinance extends Model
 
     protected $fillable = [
         'montant',
+        'devise',
         'mode_paiement_Enum',
         'Type_Transaction_Enum',
         'Date_Paiement',

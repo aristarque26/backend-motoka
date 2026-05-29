@@ -69,6 +69,8 @@ class UpdateVehiculeRequest extends FormRequest
             'Date_Expir_Assurance' => 'sometimes|date|after:today',
             'visiteTech' => 'sometimes|date|after:today',
             'kilometrage' => 'sometimes|integer|min:0',
+            'proprietaire_type' => 'nullable|in:agence,chauffeur',
+            'Idchauffeur' => 'nullable|required_if:proprietaire_type,chauffeur|exists:chauffeurs,Idchauffeur',
         ];
     }
 

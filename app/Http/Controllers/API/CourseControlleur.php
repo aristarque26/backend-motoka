@@ -92,7 +92,33 @@ class CourseControlleur extends Controller
                 $data['Idagence'] = $user->Idagence;
             }
 
+            // Logique financière
+            $chauffeur = Chauffeur::find($data['Idchauffeur']);
+            if ($chauffeur) {
+                $prix = $data['PrixReel'] ?? $data['PrixEstime'];
+                if ($chauffeur->type_contrat === 'adherent') {
+                    $commissionPercent = $chauffeur->commission ?? 10;
+                    $data['frais_fret'] = $prix * ($commissionPercent / 100);
+                    $data['montant_agence'] = $data['frais_fret'];
+                    $data['montant_chauffeur'] = $prix - $data['frais_fret'];
+                } else {
+                    $data['frais_fret'] = 0;
+                    $data['montant_agence'] = $prix;
+                    $data['montant_chauffeur'] = 0;
+                }
+
+                if (!$request->has('paye_a')) {
+                    // Par défaut: agence si c'est un colis, sinon chauffeur
+                    $data['paye_a'] = $request->has('colis_ids') ? 'agence' : 'chauffeur';
+                }
+            }
+
             $course = Course::create($data);
+
+            // Attacher les colis si présents
+            if ($request->has('colis_ids')) {
+                $course->colis()->attach($request->colis_ids, ['date_transport' => now()]);
+            }
 
             return response()->json([
                 'success' => true,
@@ -158,7 +184,28 @@ class CourseControlleur extends Controller
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $course->update($request->all());
+            $data = $request->all();
+
+            // Recalculer si le prix ou le chauffeur change
+            if ($request->has('PrixReel') || $request->has('PrixEstime') || $request->has('Idchauffeur')) {
+                $chauffeurId = $request->Idchauffeur ?? $course->Idchauffeur;
+                $chauffeur = Chauffeur::find($chauffeurId);
+                if ($chauffeur) {
+                    $prix = $request->PrixReel ?? $request->PrixEstime ?? $course->PrixReel ?? $course->PrixEstime;
+                    if ($chauffeur->type_contrat === 'adherent') {
+                        $commissionPercent = $chauffeur->commission ?? 10;
+                        $data['frais_fret'] = $prix * ($commissionPercent / 100);
+                        $data['montant_agence'] = $data['frais_fret'];
+                        $data['montant_chauffeur'] = $prix - $data['frais_fret'];
+                    } else {
+                        $data['frais_fret'] = 0;
+                        $data['montant_agence'] = $prix;
+                        $data['montant_chauffeur'] = 0;
+                    }
+                }
+            }
+
+            $course->update($data);
 
             return response()->json([
                 'success' => true,

@@ -57,6 +57,8 @@ class StoreVehiculeRequest extends FormRequest
             'Date_Expir_Assurance' => 'required|date|after:today',
             'visiteTech' => 'required|date|after:today',
             'kilometrage' => 'required|integer|min:0',
+            'proprietaire_type' => 'nullable|in:agence,chauffeur',
+            'Idchauffeur' => 'nullable|required_if:proprietaire_type,chauffeur|exists:chauffeurs,Idchauffeur',
             'Idagence' => [
                 Rule::requiredIf($this->user()->role_enum === 'superAdmin'),
                 'exists:agences,Idagence'

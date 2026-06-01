@@ -26,9 +26,14 @@ class CourseControlleur extends Controller
             
             $query = Course::query()->with(['chauffeur', 'client', 'vehicule']);
 
-            // Filtrage direct par agence
+            // Filtrage par agence
             if ($user->role_enum !== 'superAdmin') {
                 $query->where('Idagence', $user->Idagence);
+                
+                // Restriction par succursale si l'utilisateur y est rattaché
+                if ($user->Idsuccursale) {
+                    $query->where('Idsuccursale', $user->Idsuccursale);
+                }
             }
 
             // Filtres optionnels
@@ -65,18 +70,22 @@ class CourseControlleur extends Controller
 
             $validator = Validator::make($request->all(), [
                 'nomCourse' => 'required|string|max:50',
+                'departureTime' => 'nullable|date',
+                'passengers' => 'nullable|integer',
+                'load' => 'nullable|string',
                 'AdresseDepart' => 'required|string|max:50',
-                'LatitudeDepart' => 'required|numeric',
-                'LongitudeDepart' => 'required|numeric',
+                'LatitudeDepart' => 'nullable|numeric',
+                'LongitudeDepart' => 'nullable|numeric',
                 'AdresseArrive' => 'required|string|max:50',
-                'LatitudeArrivee' => 'required|numeric',
-                'LongitudeArrive' => 'required|numeric',
-                'Distance_Km' => 'required|numeric',
+                'LatitudeArrivee' => 'nullable|numeric',
+                'LongitudeArrive' => 'nullable|numeric',
+                'Distance_Km' => 'nullable|numeric',
                 'PrixEstime' => 'required|numeric',
                 'PrixReel' => 'nullable|numeric',
                 'Idclient' => 'required|exists:clients,Idclient',
                 'Idchauffeur' => 'required|exists:chauffeurs,Idchauffeur',
                 'Idvehicule' => 'nullable|exists:vehicules,Idvehicule',
+                'Idsuccursale' => 'nullable|exists:succursales,Idsuccursale',
                 'statut_enum' => 'nullable|in:en_attente,en_cours,termine,annulee',
                 'Idagence' => $user->role_enum === 'superAdmin' ? 'required|exists:agences,Idagence' : 'nullable'
             ]);
@@ -90,6 +99,11 @@ class CourseControlleur extends Controller
             // Forcer l'Idagence si non superAdmin
             if ($user->role_enum !== 'superAdmin') {
                 $data['Idagence'] = $user->Idagence;
+                
+                // Si l'utilisateur est restreint à une succursale, on force cette succursale
+                if ($user->Idsuccursale) {
+                    $data['Idsuccursale'] = $user->Idsuccursale;
+                }
             }
 
             // Logique financière
@@ -174,10 +188,14 @@ class CourseControlleur extends Controller
 
             $validator = Validator::make($request->all(), [
                 'nomCourse' => 'sometimes|string|max:50',
+                'departureTime' => 'sometimes|nullable|date',
+                'passengers' => 'sometimes|nullable|integer',
+                'load' => 'sometimes|nullable|string',
                 'statut_enum' => 'sometimes|in:en_attente,en_cours,termine,annulee',
                 'PrixReel' => 'sometimes|numeric',
                 'Idchauffeur' => 'sometimes|exists:chauffeurs,Idchauffeur',
                 'Idvehicule' => 'sometimes|exists:vehicules,Idvehicule',
+                'Idsuccursale' => 'sometimes|nullable|exists:succursales,Idsuccursale',
             ]);
 
             if ($validator->fails()) {

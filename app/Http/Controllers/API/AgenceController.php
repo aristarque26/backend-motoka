@@ -29,6 +29,19 @@ class AgenceController extends Controller
         return response()->json($agence);
     }
 
+    /**
+     * Obtenir les informations de l'agence de l'utilisateur connecté
+     */
+    public function getCurrentAgency(Request $request)
+    {
+        $user = $request->user();
+        if (!$user->Idagence) {
+            return response()->json(['message' => 'Utilisateur sans agence'], 404);
+        }
+        $agence = Agence::find($user->Idagence);
+        return response()->json($agence);
+    }
+
     // Créer une agence (super_admin uniquement)
     public function store(Request $request)
     {

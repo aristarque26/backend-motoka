@@ -49,6 +49,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     
+    // Informations sur l'agence actuelle
+    Route::get('/agence', [AgenceController::class, 'getCurrentAgency']);
+
     // Gestion des agences (super_admin uniquement)
     Route::apiResource('agences', AgenceController::class);
     

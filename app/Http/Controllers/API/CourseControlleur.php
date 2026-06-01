@@ -26,9 +26,14 @@ class CourseControlleur extends Controller
             
             $query = Course::query()->with(['chauffeur', 'client', 'vehicule']);
 
-            // Filtrage direct par agence
+            // Filtrage par agence
             if ($user->role_enum !== 'superAdmin') {
                 $query->where('Idagence', $user->Idagence);
+                
+                // Restriction par succursale si l'utilisateur y est rattaché
+                if ($user->Idsuccursale) {
+                    $query->where('Idsuccursale', $user->Idsuccursale);
+                }
             }
 
             // Filtres optionnels
@@ -94,6 +99,11 @@ class CourseControlleur extends Controller
             // Forcer l'Idagence si non superAdmin
             if ($user->role_enum !== 'superAdmin') {
                 $data['Idagence'] = $user->Idagence;
+                
+                // Si l'utilisateur est restreint à une succursale, on force cette succursale
+                if ($user->Idsuccursale) {
+                    $data['Idsuccursale'] = $user->Idsuccursale;
+                }
             }
 
             // Logique financière

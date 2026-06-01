@@ -26,9 +26,16 @@ class ColisController extends Controller
             $user = $request->user();
             $query = Colis::query()->with(['client', 'courses']);
 
-            // Filtrage direct par agence
+            // Filtrage par agence
             if ($user->role_enum !== 'superAdmin') {
                 $query->where('Idagence', $user->Idagence);
+
+                // Restriction par succursale si applicable
+                if ($user->Idsuccursale) {
+                    $query->whereHas('courses', function($q) use ($user) {
+                        $q->where('Idsuccursale', $user->Idsuccursale);
+                    });
+                }
             }
 
             // Filtres

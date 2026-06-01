@@ -15,6 +15,9 @@ class Course extends Model
 
     protected $fillable = [
         'nomCourse',
+        'departureTime',
+        'passengers',
+        'load',
         'AdresseDepart',
         'LatitudeDepart',
         'LongitudeDepart',
@@ -32,10 +35,12 @@ class Course extends Model
         'Idclient',
         'Idchauffeur',
         'Idvehicule',
-        'Idagence'
+        'Idagence',
+        'Idsuccursale'
     ];
 
     protected $casts = [
+        'departureTime' => 'datetime',
         'LatitudeDepart' => 'decimal:8',
         'LongitudeDepart' => 'decimal:8',
         'LatitudeArrivee' => 'decimal:8',
@@ -47,6 +52,13 @@ class Course extends Model
         'montant_chauffeur' => 'decimal:2',
         'montant_agence' => 'decimal:2',
     ];
+
+    protected $appends = ['id'];
+
+    public function getIdAttribute()
+    {
+        return $this->attributes['Idcource'] ?? null;
+    }
 
     // Relations
     public function client()

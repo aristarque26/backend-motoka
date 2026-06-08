@@ -15,12 +15,22 @@ class AgenceController extends Controller
         $this->middleware('role:superAdmin')->only(['store', 'update', 'destroy']);
     }
 
-    // Lister toutes les agences
-    public function index()
+    
+    public function index(Request $request)
     {
-        $agences = Agence::all();
+        $query = Agence::query();
+
+        // Si un filtre statut est présent, on l’applique
+        if ($request->has('statut_enum')) {
+            $query->where('statut_enum', $request->statut_enum);
+        }
+
+        // Pagination (10 par page par exemple)
+        $agences = $query->paginate(10);
+
         return response()->json($agences);
     }
+
 
     // Voir une agence
     public function show($id)
@@ -170,8 +180,8 @@ class AgenceController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'nom' => 'sometimes|string|max:100',
-                'slug' => 'sometimes|string|max:100|unique:agences,slug,' . $id,
-                'email' => 'sometimes|email|unique:agences,email,' . $id,
+                'slug' => 'sometimes|string|max:100|unique:agences,slug,' . $id . ',Idagence',
+                'email' => 'sometimes|email|unique:agences,email,' . $id . ',Idagence',
                 'telephone' => 'sometimes|string|max:20',
                 'adresse' => 'nullable|string',
                 'logo_url' => 'nullable|string',

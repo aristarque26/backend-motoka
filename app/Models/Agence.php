@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\App;
 
 class Agence extends Model
 {
@@ -68,5 +69,16 @@ class Agence extends Model
     public function clients()
     {
         return $this->hasMany(Client::class, 'Idagence', 'Idagence');
+    }
+
+    public function adminAgence()
+    {
+        return $this->hasOne(User::class, 'Idagence', 'Idagence')
+                    ->where('role_enum', 'adminAgence');
+    }
+
+    public function succursales()
+    {
+        return $this->hasMany(Succursale::class, 'Idagence', 'Idagence');
     }
 }

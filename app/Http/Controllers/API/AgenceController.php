@@ -39,6 +39,16 @@ class AgenceController extends Controller
         return response()->json($agence);
     }
 
+    // Voir une agence avec détails enrichis (version mobile)
+    public function showDetail(Request $request, $id)
+    {
+        $agence = Agence::with([
+            'adminAgence',
+        ])->findOrFail($id);
+
+        return response()->json($agence);
+    }
+
     /**
      * Obtenir les informations de l'agence de l'utilisateur connecté
      */

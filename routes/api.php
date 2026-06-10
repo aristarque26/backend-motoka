@@ -117,4 +117,11 @@ Route::middleware('auth:sanctum')->group(function () {
             'user' => Auth::user()
         ]);
     });
+
+    // Route pour voir les détails d'une agence (version mobile)
+    Route::get('/agences/{id}/detail', [AgenceController::class, 'showDetail']);
+
+   
 });
+
+

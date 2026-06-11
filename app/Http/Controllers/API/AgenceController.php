@@ -207,6 +207,25 @@ class AgenceController extends Controller
     }
 
     // Supprimer une agence (super_admin uniquement)
+    public function getCurrentAgency(Request $request)
+    {
+        try {
+            $user = $request->user();
+            if (!$user->Idagence) {
+                return response()->json(['message' => 'Aucune agence associée'], 404);
+            }
+
+            $agence = Agence::with('succursales')->findOrFail($user->Idagence);
+
+            return response()->json([
+                'success' => true,
+                'data' => $agence
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
     public function updateSettings(Request $request)
     {
         try {

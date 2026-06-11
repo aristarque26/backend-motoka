@@ -114,6 +114,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('colis', ColisController::class);
     Route::apiResource('itineraries', ItineraryController::class);
     Route::apiResource('passagers', PassagerController::class);
+    Route::apiResource('transactions-finances', \App\Http\Controllers\API\TransactionFinanceController::class);
     
     // Dashboard (optionnel)
     Route::get('/dashboard', function () {

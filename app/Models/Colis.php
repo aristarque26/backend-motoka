@@ -26,6 +26,9 @@ class Colis extends Model
         'Signature_Url',
         'Description',
         'Poids',
+        'prix',
+        'devise',
+        'methode_calcul_prix',
         'Idclient',
         'Idagence'
     ];
@@ -33,6 +36,7 @@ class Colis extends Model
     protected $casts = [
         'Otp_genere' => 'datetime',
         'Poids' => 'decimal:2',
+        'prix' => 'decimal:2',
     ];
 
     // Relations

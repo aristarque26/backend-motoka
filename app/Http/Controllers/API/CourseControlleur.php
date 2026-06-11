@@ -123,9 +123,11 @@ class CourseControlleur extends Controller
             $commission = 0;
             $montant_agence = 0;
             $montant_chauffeur = 0;
+            $is_partner = false;
 
             if ($chauffeur) {
                 if ($chauffeur->type_contrat === 'adherent') {
+                    $is_partner = true;
                     $commissionPercent = $chauffeur->commission ?? 10;
                     $commission = $prix * ($commissionPercent / 100);
                 }
@@ -133,6 +135,7 @@ class CourseControlleur extends Controller
 
             if ($vehicule) {
                 if ($vehicule->proprietaire_type === 'chauffeur') {
+                    $is_partner = true;
                     // Frais de suivi / commission fixe pour véhicule adhérent
                     $fraisFixe = $vehicule->commission_fixe_course ?? 0;
                     $commission += $fraisFixe;
@@ -149,18 +152,37 @@ class CourseControlleur extends Controller
 
             $course = Course::create($data);
 
-            // Création de la transaction financière initiale
-            \App\Models\TransactionFinance::create([
-                'montant' => $prix,
-                'devise' => 'CDF',
-                'mode_paiement_Enum' => $request->mode_paiement ?? 'especes',
-                'Type_Transaction_Enum' => ($data['type_course'] ?? 'passager') === 'colis' ? 'colis' : 'course',
-                'Date_Paiement' => now(),
-                'Idcource' => $course->Idcource,
-                'Idagence' => $data['Idagence'],
-                'Idsuccursale' => $data['Idsuccursale'] ?? null,
-                'description' => "Paiement pour la course " . $course->nomCourse
-            ]);
+            // Gestion de la caisse Agence (Caisse de l'Agence)
+            // Si c'est un partenaire (adhérent), l'agence ne touche QUE la commission/frais de suivi
+            if ($is_partner) {
+                if ($commission > 0) {
+                    \App\Models\TransactionFinance::create([
+                        'montant' => $commission,
+                        'devise' => 'CDF',
+                        'mode_paiement_Enum' => $request->mode_paiement ?? 'especes',
+                        'Type_Transaction_Enum' => 'autre', // Frais de suivi / Commission
+                        'Date_Paiement' => now(),
+                        'Idcource' => $course->Idcource,
+                        'Idagence' => $data['Idagence'],
+                        'Idsuccursale' => $data['Idsuccursale'] ?? null,
+                        'description' => "Frais de suivi / Commission Adhérent pour la course " . $course->nomCourse
+                    ]);
+                }
+                // Le reste du montant ($prix - $commission) appartient au chauffeur et n'est pas enregistré en caisse agence
+            } else {
+                // Si c'est un chauffeur AGENCÉ, TOUT l'argent va dans la caisse de l'agence
+                \App\Models\TransactionFinance::create([
+                    'montant' => $prix,
+                    'devise' => 'CDF',
+                    'mode_paiement_Enum' => $request->mode_paiement ?? 'especes',
+                    'Type_Transaction_Enum' => ($data['type_course'] ?? 'passager') === 'colis' ? 'colis' : 'course',
+                    'Date_Paiement' => now(),
+                    'Idcource' => $course->Idcource,
+                    'Idagence' => $data['Idagence'],
+                    'Idsuccursale' => $data['Idsuccursale'] ?? null,
+                    'description' => "Paiement total course Agence " . $course->nomCourse
+                ]);
+            }
 
             // Attacher les colis si présents
             if ($request->has('colis_ids')) {

@@ -207,6 +207,46 @@ class AgenceController extends Controller
     }
 
     // Supprimer une agence (super_admin uniquement)
+    public function updateSettings(Request $request)
+    {
+        try {
+            $user = $request->user();
+            if ($user->role_enum !== 'adminAgence' && $user->role_enum !== 'superAdmin') {
+                return response()->json(['message' => 'Accès non autorisé'], 403);
+            }
+
+            $agence = Agence::findOrFail($user->Idagence);
+            
+            $validator = Validator::make($request->all(), [
+                'nomAgence' => 'sometimes|string|max:255',
+                'adresse' => 'sometimes|string',
+                'telephone' => 'sometimes|string',
+                'email' => 'sometimes|email',
+                'config_prix_km' => 'nullable|numeric',
+                'config_frais_adhesion' => 'nullable|numeric',
+                'config_commission_defaut' => 'nullable|numeric',
+                'logo_url' => 'nullable|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            // Pour l'instant on utilise un champ JSON ou on ajoute des colonnes
+            // Imaginons qu'on stocke dans un champ 'settings' JSON si existant, 
+            // sinon on update les colonnes directes si elles existent.
+            $agence->update($request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Paramètres de l\'agence mis à jour',
+                'data' => $agence
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
     public function destroy($id)
     {
         try {

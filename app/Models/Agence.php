@@ -25,6 +25,10 @@ class Agence extends Model
         'statut_enum',
         'ExpirationDate',
         'password',
+        'config_prix_km',
+        'config_frais_adhesion',
+        'config_commission_defaut',
+        'couleur_primaire',
         'IdAbonnement'
     ];
 
@@ -32,9 +36,17 @@ class Agence extends Model
 
     protected $casts = [
         'ExpirationDate' => 'datetime',
+        'config_prix_km' => 'decimal:2',
+        'config_frais_adhesion' => 'decimal:2',
+        'config_commission_defaut' => 'decimal:2',
     ];
 
     // Relations
+    public function succursales()
+    {
+        return $this->hasMany(Succursale::class, 'Idagence', 'Idagence');
+    }
+
     public function abonnement()
     {
         return $this->belongsTo(Abonnement::class, 'IdAbonnement', 'IdAbonnement');

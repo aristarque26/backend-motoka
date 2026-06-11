@@ -70,6 +70,7 @@ class CourseControlleur extends Controller
 
             $validator = Validator::make($request->all(), [
                 'nomCourse' => 'required|string|max:50',
+                'Iditinerary' => 'nullable|exists:itineraries,Iditinerary',
                 'departureTime' => 'nullable|date',
                 'passengers' => 'nullable|integer',
                 'load' => 'nullable|string',
@@ -188,6 +189,7 @@ class CourseControlleur extends Controller
 
             $validator = Validator::make($request->all(), [
                 'nomCourse' => 'sometimes|string|max:50',
+                'Iditinerary' => 'sometimes|nullable|exists:itineraries,Iditinerary',
                 'departureTime' => 'sometimes|nullable|date',
                 'passengers' => 'sometimes|nullable|integer',
                 'load' => 'sometimes|nullable|string',

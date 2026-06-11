@@ -77,6 +77,7 @@ class ColisController extends Controller
                 'Description' => 'nullable|string|max:255',
                 'Poids' => 'required|numeric|min:0.1',
                 'Idclient' => 'required|exists:clients,Idclient',
+                'Idcource' => 'nullable|exists:courses,Idcource',
                 'statut_enum' => 'nullable|in:enregistre,en_transit,livre,recupere',
                 'Idagence' => $user->role_enum === 'superAdmin' ? 'required|exists:agences,Idagence' : 'nullable'
             ]);
@@ -104,6 +105,11 @@ class ColisController extends Controller
             ];
 
             $colis = Colis::create($data);
+
+            // Association directe avec une course
+            if ($request->has('Idcource')) {
+                $colis->courses()->attach($request->Idcource, ['date_transport' => now()]);
+            }
 
             return response()->json([
                 'success' => true,

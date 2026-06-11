@@ -29,6 +29,7 @@ class Colis extends Model
         'prix',
         'devise',
         'methode_calcul_prix',
+        'Idpassager',
         'Idclient',
         'Idagence'
     ];
@@ -40,6 +41,11 @@ class Colis extends Model
     ];
 
     // Relations
+    public function passager()
+    {
+        return $this->belongsTo(Passager::class, 'Idpassager', 'Idpassager');
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class, 'Idclient', 'Idclient');

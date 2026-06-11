@@ -24,8 +24,11 @@ class Itinerary extends Model
         'longitude_arrivee',
         'distance_km_estimee',
         'prix_estime',
+        'prix_base_passager',
         'Idagence',
-        'Idsuccursale'
+        'Idsuccursale',
+        'Idsuccursale_depart',
+        'Idsuccursale_arrivee'
     ];
 
     protected $casts = [
@@ -35,6 +38,7 @@ class Itinerary extends Model
         'longitude_arrivee' => 'decimal:8',
         'distance_km_estimee' => 'decimal:2',
         'prix_estime' => 'decimal:2',
+        'prix_base_passager' => 'decimal:2',
     ];
 
     public function agence()
@@ -45,6 +49,16 @@ class Itinerary extends Model
     public function succursale()
     {
         return $this->belongsTo(Succursale::class, 'Idsuccursale', 'Idsuccursale');
+    }
+
+    public function branchDepart()
+    {
+        return $this->belongsTo(Succursale::class, 'Idsuccursale_depart', 'Idsuccursale');
+    }
+
+    public function branchArrivee()
+    {
+        return $this->belongsTo(Succursale::class, 'Idsuccursale_arrivee', 'Idsuccursale');
     }
 
     public function courses()

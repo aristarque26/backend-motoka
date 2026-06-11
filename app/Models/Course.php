@@ -75,6 +75,11 @@ class Course extends Model
         return $this->belongsTo(Client::class, 'Idclient', 'Idclient');
     }
 
+    public function passagers()
+    {
+        return $this->hasMany(Passager::class, 'Idcource', 'Idcource');
+    }
+
     public function chauffeur()
     {
         return $this->belongsTo(Chauffeur::class, 'Idchauffeur', 'Idchauffeur');

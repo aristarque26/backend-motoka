@@ -16,14 +16,21 @@ class SuccursaleController extends Controller
 
     public function index(Request $request)
     {
-        $user = $request->user();
-        $query = Succursale::with('manager');
+        try {
+            $user = $request->user();
+            $query = Succursale::with('manager');
 
-        if ($user->role_enum !== 'superAdmin') {
-            $query->where('Idagence', $user->Idagence);
+            if ($user->role_enum !== 'superAdmin') {
+                $query->where('Idagence', $user->Idagence);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $query->get()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
-
-        return response()->json($query->get());
     }
 
     public function store(Request $request)

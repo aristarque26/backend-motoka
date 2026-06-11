@@ -18,19 +18,39 @@ class TransactionFinance extends Model
         'montant',
         'devise',
         'mode_paiement_Enum',
+        'reference_paiement',
         'Type_Transaction_Enum',
+        'description',
         'Date_Paiement',
-        'Idcource'
+        'Idcource',
+        'Idagence',
+        'Idchauffeur',
+        'Idsuccursale'
     ];
 
     protected $casts = [
         'Date_Paiement' => 'datetime',
-        'montant' => 'integer',
+        'montant' => 'decimal:2',
     ];
 
     // Relations
     public function course()
     {
         return $this->belongsTo(Course::class, 'Idcource', 'Idcource');
+    }
+
+    public function agence()
+    {
+        return $this->belongsTo(Agence::class, 'Idagence', 'Idagence');
+    }
+
+    public function chauffeur()
+    {
+        return $this->belongsTo(Chauffeur::class, 'Idchauffeur', 'Idchauffeur');
+    }
+
+    public function succursale()
+    {
+        return $this->belongsTo(Succursale::class, 'Idsuccursale', 'Idsuccursale');
     }
 }

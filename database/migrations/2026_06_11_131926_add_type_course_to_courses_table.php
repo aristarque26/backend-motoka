@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('courses', function (Blueprint $table) {
-            //
+            $table->enum('type_course', ['passager', 'colis', 'mixte'])->default('passager')->after('nomCourse');
+            $table->decimal('poids_total', 15, 2)->nullable()->after('load');
         });
     }
 
@@ -22,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('courses', function (Blueprint $table) {
-            //
+            $table->dropColumn(['type_course', 'poids_total']);
         });
     }
 };

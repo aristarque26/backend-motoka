@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('vehicules', function (Blueprint $table) {
-            //
+            $table->decimal('commission_fixe_course', 15, 2)->nullable()->after('proprietaire_type')->comment('Somme convenue pour les frais de suivi des adhérents');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('vehicules', function (Blueprint $table) {
-            //
+            $table->dropColumn('commission_fixe_course');
         });
     }
 };

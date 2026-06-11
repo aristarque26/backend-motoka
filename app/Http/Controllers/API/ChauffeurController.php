@@ -59,7 +59,10 @@ class ChauffeurController extends Controller
                     ->paginate(20);
             }
 
-            return response()->json($chauffeurs);
+            return response()->json([
+                'success' => true,
+                'data' => $chauffeurs
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([

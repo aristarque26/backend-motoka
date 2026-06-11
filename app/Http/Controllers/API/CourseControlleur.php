@@ -24,7 +24,7 @@ class CourseControlleur extends Controller
         try {
             $user = $request->user();
             
-            $query = Course::query()->with(['chauffeur', 'client', 'vehicule']);
+            $query = Course::query()->with(['chauffeur', 'client', 'vehicule', 'itinerary', 'passagers.colis']);
 
             // Filtrage par agence
             if ($user->role_enum !== 'superAdmin') {
@@ -45,7 +45,7 @@ class CourseControlleur extends Controller
                 $query->where('Idchauffeur', $request->chauffeur_id);
             }
 
-            $courses = $query->latest()->paginate(20);
+            $courses = $query->latest('departureTime')->paginate(20);
 
             return response()->json([
                 'success' => true,

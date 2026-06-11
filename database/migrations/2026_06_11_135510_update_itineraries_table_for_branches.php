@@ -12,7 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('itineraries', function (Blueprint $table) {
-            //
+            $table->foreignId('Idsuccursale_depart')->nullable()->after('Idsuccursale')->constrained('succursales', 'Idsuccursale')->onDelete('set null');
+            $table->foreignId('Idsuccursale_arrivee')->nullable()->after('Idsuccursale_depart')->constrained('succursales', 'Idsuccursale')->onDelete('set null');
+            $table->decimal('prix_base_passager', 15, 2)->nullable()->after('prix_estime');
         });
     }
 
@@ -22,7 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('itineraries', function (Blueprint $table) {
-            //
+            $table->dropForeign(['Idsuccursale_depart']);
+            $table->dropForeign(['Idsuccursale_arrivee']);
+            $table->dropColumn(['Idsuccursale_depart', 'Idsuccursale_arrivee', 'prix_base_passager']);
         });
     }
 };

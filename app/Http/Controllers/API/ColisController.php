@@ -76,6 +76,9 @@ class ColisController extends Controller
                 'nomDestinateur' => 'required|string|max:50',
                 'Description' => 'nullable|string|max:255',
                 'Poids' => 'required|numeric|min:0.1',
+                'prix' => 'required|numeric|min:0',
+                'devise' => 'nullable|string|max:5',
+                'methode_calcul_prix' => 'nullable|in:poids,manuel',
                 'Idclient' => 'required|exists:clients,Idclient',
                 'Idcource' => 'nullable|exists:courses,Idcource',
                 'statut_enum' => 'nullable|in:enregistre,en_transit,livre,recupere',
@@ -100,11 +103,25 @@ class ColisController extends Controller
                 'statut_enum' => $request->statut_enum ?? 'enregistre',
                 'Description' => $request->Description,
                 'Poids' => $request->Poids,
+                'prix' => $request->prix,
+                'devise' => $request->devise ?? 'CDF',
+                'methode_calcul_prix' => $request->methode_calcul_prix ?? 'manuel',
                 'Idclient' => $request->Idclient,
                 'Idagence' => ($user->role_enum === 'superAdmin') ? $request->Idagence : $user->Idagence
             ];
 
             $colis = Colis::create($data);
+
+            // Création d'une transaction financière pour le colis
+            \App\Models\TransactionFinance::create([
+                'montant' => $request->prix,
+                'devise' => $request->devise ?? 'CDF',
+                'mode_paiement_Enum' => $request->mode_paiement ?? 'especes',
+                'Type_Transaction_Enum' => 'colis',
+                'description' => "Enregistrement colis " . $codeColis,
+                'Date_Paiement' => now(),
+                'Idagence' => $data['Idagence']
+            ]);
 
             // Association directe avec une course
             if ($request->has('Idcource')) {

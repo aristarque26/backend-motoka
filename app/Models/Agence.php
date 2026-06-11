@@ -81,4 +81,9 @@ class Agence extends Model
     {
         return $this->hasMany(Succursale::class, 'Idagence', 'Idagence');
     }
+    public function courses()
+    {
+        return $this->hasMany(Course::class, 'Idagence', 'Idagence');
+    }
+
 }

@@ -44,8 +44,15 @@ class AgenceController extends Controller
     {
         $agence = Agence::with([
             'adminAgence',
-        ])->findOrFail($id);
-
+            'succursales',
+            'vehicules',
+            'chauffeurs',
+            'depenses',
+            'courses'
+        ])
+        ->withCount(['succursales', 'vehicules', 'chauffeurs', 'courses'])
+        ->findOrFail($id);
+        $agence->revenusTotal = $agence->depenses->sum('montant');
         return response()->json($agence);
     }
 

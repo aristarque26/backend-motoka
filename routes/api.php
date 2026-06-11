@@ -10,6 +10,7 @@ use App\Http\Controllers\API\VehiculeController;
 use App\Http\Controllers\API\CourseControlleur;
 use App\Http\Controllers\API\ColisController;
 use App\Http\Controllers\API\ItineraryController;
+use App\Http\Controllers\API\PassagerController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -111,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('courses', CourseControlleur::class);
     Route::apiResource('colis', ColisController::class);
     Route::apiResource('itineraries', ItineraryController::class);
+    Route::apiResource('passagers', PassagerController::class);
     
     // Dashboard (optionnel)
     Route::get('/dashboard', function () {

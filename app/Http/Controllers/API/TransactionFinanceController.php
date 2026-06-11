@@ -18,17 +18,35 @@ class TransactionFinanceController extends Controller
     {
         try {
             $user = $request->user();
-            $query = TransactionFinance::with('course');
+            $query = TransactionFinance::with(['course', 'chauffeur', 'succursale']);
 
+            // Scoping par agence
             if ($user->role_enum !== 'superAdmin') {
-                $query->whereHas('course', function($q) use ($user) {
-                    $q->where('Idagence', $user->Idagence);
-                });
+                $query->where('Idagence', $user->Idagence);
             }
+
+            // Filtrage par succursale si applicable
+            if ($request->has('Idsuccursale')) {
+                $query->where('Idsuccursale', $request->Idsuccursale);
+            } elseif ($user->Idsuccursale) {
+                $query->where('Idsuccursale', $user->Idsuccursale);
+            }
+
+            // Filtrage par date
+            if ($request->has('date')) {
+                $query->whereDate('Date_Paiement', $request->date);
+            }
+
+            // Filtrage par type
+            if ($request->has('type')) {
+                $query->where('Type_Transaction_Enum', $request->type);
+            }
+
+            $transactions = $query->latest('Date_Paiement')->get();
 
             return response()->json([
                 'success' => true,
-                'data' => $query->latest()->paginate(20)
+                'data' => $transactions
             ]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);

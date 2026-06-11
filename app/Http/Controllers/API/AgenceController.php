@@ -212,7 +212,11 @@ class AgenceController extends Controller
         try {
             $user = $request->user();
             if (!$user->Idagence) {
-                return response()->json(['message' => 'Aucune agence associée'], 404);
+                return response()->json([
+                    'success' => true,
+                    'data' => null,
+                    'message' => 'Aucune agence associée'
+                ]);
             }
 
             $agence = Agence::with('succursales')->findOrFail($user->Idagence);

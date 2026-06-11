@@ -15,6 +15,7 @@ class Course extends Model
 
     protected $fillable = [
         'nomCourse',
+        'Iditinerary',
         'departureTime',
         'passengers',
         'load',
@@ -61,6 +62,11 @@ class Course extends Model
     }
 
     // Relations
+    public function itinerary()
+    {
+        return $this->belongsTo(Itinerary::class, 'Iditinerary', 'Iditinerary');
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class, 'Idclient', 'Idclient');

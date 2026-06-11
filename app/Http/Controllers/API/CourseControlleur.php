@@ -221,6 +221,8 @@ class CourseControlleur extends Controller
 
             $validator = Validator::make($request->all(), [
                 'nomCourse' => 'sometimes|string|max:50',
+                'type_course' => 'sometimes|in:passager,colis,mixte',
+                'poids_total' => 'sometimes|nullable|numeric',
                 'Iditinerary' => 'sometimes|nullable|exists:itineraries,Iditinerary',
                 'departureTime' => 'sometimes|nullable|date',
                 'passengers' => 'sometimes|nullable|integer',

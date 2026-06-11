@@ -70,6 +70,7 @@ class UpdateVehiculeRequest extends FormRequest
             'visiteTech' => 'sometimes|date|after:today',
             'kilometrage' => 'sometimes|integer|min:0',
             'proprietaire_type' => 'nullable|in:agence,chauffeur',
+            'commission_fixe_course' => 'nullable|numeric|min:0',
             'Idchauffeur' => 'nullable|required_if:proprietaire_type,chauffeur|exists:chauffeurs,Idchauffeur',
         ];
     }

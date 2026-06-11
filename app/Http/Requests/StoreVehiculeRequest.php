@@ -58,6 +58,7 @@ class StoreVehiculeRequest extends FormRequest
             'visiteTech' => 'required|date|after:today',
             'kilometrage' => 'required|integer|min:0',
             'proprietaire_type' => 'nullable|in:agence,chauffeur',
+            'commission_fixe_course' => 'nullable|numeric|min:0',
             'Idchauffeur' => 'nullable|required_if:proprietaire_type,chauffeur|exists:chauffeurs,Idchauffeur',
             'Idagence' => [
                 Rule::requiredIf($this->user()->role_enum === 'superAdmin'),

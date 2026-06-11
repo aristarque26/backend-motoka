@@ -209,8 +209,8 @@ class CourseControlleur extends Controller
     public function show($id)
     {
         try {
-            $user = Auth::user();
-            $course = Course::with(['chauffeur', 'client', 'vehicule', 'colis'])->findOrFail($id);
+            $user = \Illuminate\Support\Facades\Auth::user();
+            $course = Course::with(['chauffeur', 'client', 'vehicule', 'colis', 'passagers.colis', 'itinerary'])->findOrFail($id);
 
             // Vérification des droits d'accès
             if ($user->role_enum !== 'superAdmin' && $course->Idagence !== $user->Idagence) {

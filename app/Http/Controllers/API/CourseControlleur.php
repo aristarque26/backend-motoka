@@ -70,10 +70,12 @@ class CourseControlleur extends Controller
 
             $validator = Validator::make($request->all(), [
                 'nomCourse' => 'required|string|max:50',
+                'type_course' => 'nullable|in:passager,colis,mixte',
                 'Iditinerary' => 'nullable|exists:itineraries,Iditinerary',
                 'departureTime' => 'nullable|date',
                 'passengers' => 'nullable|integer',
                 'load' => 'nullable|string',
+                'poids_total' => 'nullable|numeric',
                 'AdresseDepart' => 'required|string|max:50',
                 'LatitudeDepart' => 'nullable|numeric',
                 'LongitudeDepart' => 'nullable|numeric',
@@ -100,35 +102,65 @@ class CourseControlleur extends Controller
             // Forcer l'Idagence si non superAdmin
             if ($user->role_enum !== 'superAdmin') {
                 $data['Idagence'] = $user->Idagence;
-                
-                // Si l'utilisateur est restreint à une succursale, on force cette succursale
                 if ($user->Idsuccursale) {
                     $data['Idsuccursale'] = $user->Idsuccursale;
                 }
             }
 
-            // Logique financière
-            $chauffeur = Chauffeur::find($data['Idchauffeur']);
+            $prix = $data['PrixReel'] ?? $data['PrixEstime'];
+
+            // Logique de prix basée sur le poids pour les colis
+            if (($data['type_course'] ?? 'passager') === 'colis' && isset($data['poids_total'])) {
+                // Si le prix n'est pas explicitement fourni, on peut imaginer un calcul
+                // $data['PrixReel'] = $data['poids_total'] * $prix_au_kg; 
+                // Mais l'utilisateur demande "flexible", donc on garde ce qui vient du front
+            }
+
+            // Logique financière et commissions
+            $chauffeur = \App\Models\Chauffeur::find($data['Idchauffeur']);
+            $vehicule = isset($data['Idvehicule']) ? \App\Models\Vehicule::find($data['Idvehicule']) : null;
+            
+            $commission = 0;
+            $montant_agence = 0;
+            $montant_chauffeur = 0;
+
             if ($chauffeur) {
-                $prix = $data['PrixReel'] ?? $data['PrixEstime'];
                 if ($chauffeur->type_contrat === 'adherent') {
                     $commissionPercent = $chauffeur->commission ?? 10;
-                    $data['frais_fret'] = $prix * ($commissionPercent / 100);
-                    $data['montant_agence'] = $data['frais_fret'];
-                    $data['montant_chauffeur'] = $prix - $data['frais_fret'];
-                } else {
-                    $data['frais_fret'] = 0;
-                    $data['montant_agence'] = $prix;
-                    $data['montant_chauffeur'] = 0;
-                }
-
-                if (!$request->has('paye_a')) {
-                    // Par défaut: agence si c'est un colis, sinon chauffeur
-                    $data['paye_a'] = $request->has('colis_ids') ? 'agence' : 'chauffeur';
+                    $commission = $prix * ($commissionPercent / 100);
                 }
             }
 
+            if ($vehicule) {
+                if ($vehicule->proprietaire_type === 'chauffeur') {
+                    // Frais de suivi / commission fixe pour véhicule adhérent
+                    $fraisFixe = $vehicule->commission_fixe_course ?? 0;
+                    $commission += $fraisFixe;
+                }
+            }
+
+            $data['frais_fret'] = $commission;
+            $data['montant_agence'] = $commission;
+            $data['montant_chauffeur'] = $prix - $commission;
+
+            if (!$request->has('paye_a')) {
+                $data['paye_a'] = ($data['type_course'] ?? 'passager') === 'colis' ? 'agence' : 'chauffeur';
+            }
+
             $course = Course::create($data);
+
+            // Création de la transaction financière initiale
+            \App\Models\TransactionFinance::create([
+                'montant' => $prix,
+                'devise' => 'CDF',
+                'mode_paiement_Enum' => $request->mode_paiement ?? 'especes',
+                'Type_Transaction_Enum' => ($data['type_course'] ?? 'passager') === 'colis' ? 'colis' : 'course',
+                'Date_Paiement' => now(),
+                'Idcource' => $course->Idcource,
+                'Idagence' => $data['Idagence'],
+                'Idsuccursale' => $data['Idsuccursale'] ?? null,
+                'description' => "Paiement pour la course " . $course->nomCourse
+            ]);
 
             // Attacher les colis si présents
             if ($request->has('colis_ids')) {

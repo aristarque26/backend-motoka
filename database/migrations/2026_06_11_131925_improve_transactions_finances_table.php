@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::table('transactions_finances', function (Blueprint $table) {
             $table->foreignId('Idcource')->nullable()->change();
-            $table->string('devise', 5)->default('CDF')->after('montant');
             $table->foreignId('Idagence')->nullable()->after('Idcource')->constrained('agences', 'Idagence')->onDelete('cascade');
             $table->foreignId('Idchauffeur')->nullable()->after('Idagence')->constrained('chauffeurs', 'Idchauffeur')->onDelete('set null');
             $table->foreignId('Idsuccursale')->nullable()->after('Idchauffeur')->constrained('succursales', 'Idsuccursale')->onDelete('set null');
@@ -32,7 +31,7 @@ return new class extends Migration
             $table->dropForeign(['Idagence']);
             $table->dropForeign(['Idchauffeur']);
             $table->dropForeign(['Idsuccursale']);
-            $table->dropColumn(['devise', 'Idagence', 'Idchauffeur', 'Idsuccursale', 'reference_paiement', 'description']);
+            $table->dropColumn(['Idagence', 'Idchauffeur', 'Idsuccursale', 'reference_paiement', 'description']);
         });
     }
 };

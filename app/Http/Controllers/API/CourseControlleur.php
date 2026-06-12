@@ -85,7 +85,7 @@ class CourseControlleur extends Controller
                 'Distance_Km' => 'nullable|numeric',
                 'PrixEstime' => 'required|numeric',
                 'PrixReel' => 'nullable|numeric',
-                'Idclient' => 'required|exists:clients,Idclient',
+                'Idclient' => 'nullable|exists:clients,Idclient',
                 'Idchauffeur' => 'required|exists:chauffeurs,Idchauffeur',
                 'Idvehicule' => 'nullable|exists:vehicules,Idvehicule',
                 'Idsuccursale' => 'nullable|exists:succursales,Idsuccursale',
@@ -105,6 +105,23 @@ class CourseControlleur extends Controller
                 if ($user->Idsuccursale) {
                     $data['Idsuccursale'] = $user->Idsuccursale;
                 }
+            }
+
+            if (empty($data['Idclient'])) {
+                $client = \App\Models\Client::firstOrCreate(
+                    [
+                        'Idutilisateur' => $user->id,
+                        'Idagence' => $data['Idagence'] ?? $user->Idagence,
+                    ],
+                    [
+                        'nomClient' => $user->name ?? 'Client comptoir',
+                        'emailClient' => $user->email,
+                        'telephoneClient' => $user->telephone ?? 'N/A',
+                        'DateInscription' => now(),
+                        'typeClient_ENUM' => 'particulier',
+                    ]
+                );
+                $data['Idclient'] = $client->Idclient;
             }
 
             $prix = $data['PrixReel'] ?? $data['PrixEstime'];

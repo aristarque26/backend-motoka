@@ -56,20 +56,35 @@ class TransactionFinanceController extends Controller
     public function store(Request $request)
     {
         try {
+            $user = $request->user();
+
             $validator = Validator::make($request->all(), [
                 'montant' => 'required|numeric',
-                'devise' => 'required|string|max:3',
-                'mode_paiement_Enum' => 'required|string',
-                'Type_Transaction_Enum' => 'required|string',
+                'devise' => 'nullable|string|max:5',
+                'mode_paiement_Enum' => 'nullable|in:especes,carte_bancaire,m_pesa,orange_money,airtel_money',
+                'Type_Transaction_Enum' => 'required|in:course,colis,abonnements,maintenance,carburant,salaire,autre',
                 'Date_Paiement' => 'required|date',
-                'Idcource' => 'required|exists:courses,Idcource'
+                'description' => 'nullable|string',
+                'Idcource' => 'nullable|exists:courses,Idcource',
+                'Idagence' => $user->role_enum === 'superAdmin' ? 'nullable|exists:agences,Idagence' : 'nullable',
+                'Idsuccursale' => 'nullable|exists:succursales,Idsuccursale',
             ]);
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $transaction = TransactionFinance::create($request->all());
+            $data = $validator->validated();
+            $data['devise'] = $data['devise'] ?? 'CDF';
+            $data['mode_paiement_Enum'] = $data['mode_paiement_Enum'] ?? 'especes';
+            $data['Idagence'] = $user->role_enum === 'superAdmin'
+                ? ($data['Idagence'] ?? null)
+                : $user->Idagence;
+            if ($user->Idsuccursale) {
+                $data['Idsuccursale'] = $user->Idsuccursale;
+            }
+
+            $transaction = TransactionFinance::create($data);
 
             return response()->json([
                 'success' => true,

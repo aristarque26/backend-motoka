@@ -29,19 +29,6 @@ class AgenceController extends Controller
         return response()->json($agence);
     }
 
-    /**
-     * Obtenir les informations de l'agence de l'utilisateur connecté
-     */
-    public function getCurrentAgency(Request $request)
-    {
-        $user = $request->user();
-        if (!$user->Idagence) {
-            return response()->json(['message' => 'Utilisateur sans agence'], 404);
-        }
-        $agence = Agence::find($user->Idagence);
-        return response()->json($agence);
-    }
-
     // Créer une agence (super_admin uniquement)
     public function store(Request $request)
     {
@@ -206,7 +193,7 @@ class AgenceController extends Controller
         }
     }
 
-    // Supprimer une agence (super_admin uniquement)
+    // Obtenir les informations de l'agence de l'utilisateur connecte
     public function getCurrentAgency(Request $request)
     {
         try {
@@ -242,6 +229,7 @@ class AgenceController extends Controller
             
             $validator = Validator::make($request->all(), [
                 'nomAgence' => 'sometimes|string|max:255',
+                'nom' => 'sometimes|string|max:255',
                 'adresse' => 'sometimes|string',
                 'telephone' => 'sometimes|string',
                 'email' => 'sometimes|email',
@@ -249,16 +237,20 @@ class AgenceController extends Controller
                 'config_frais_adhesion' => 'nullable|numeric',
                 'config_commission_defaut' => 'nullable|numeric',
                 'logo_url' => 'nullable|string',
+                'couleur_primaire' => 'nullable|string|max:20',
             ]);
 
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            // Pour l'instant on utilise un champ JSON ou on ajoute des colonnes
-            // Imaginons qu'on stocke dans un champ 'settings' JSON si existant, 
-            // sinon on update les colonnes directes si elles existent.
-            $agence->update($request->all());
+            $data = $validator->validated();
+            if (isset($data['nomAgence'])) {
+                $data['nom'] = $data['nomAgence'];
+                unset($data['nomAgence']);
+            }
+
+            $agence->update($data);
 
             return response()->json([
                 'success' => true,

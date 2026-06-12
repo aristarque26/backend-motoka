@@ -79,7 +79,7 @@ class ColisController extends Controller
                 'prix' => 'required|numeric|min:0',
                 'devise' => 'nullable|string|max:5',
                 'methode_calcul_prix' => 'nullable|in:poids,manuel',
-                'Idclient' => 'required|exists:clients,Idclient',
+                'Idclient' => 'nullable|exists:clients,Idclient',
                 'Idcource' => 'nullable|exists:courses,Idcource',
                 'statut_enum' => 'nullable|in:enregistre,en_transit,livre,recupere',
                 'Idagence' => $user->role_enum === 'superAdmin' ? 'required|exists:agences,Idagence' : 'nullable'
@@ -92,6 +92,25 @@ class ColisController extends Controller
             // Génération d'un code colis unique et d'un OTP
             $codeColis = 'MOT-' . strtoupper(Str::random(8));
             $otp = rand(1000, 9999);
+
+            $agenceId = ($user->role_enum === 'superAdmin') ? $request->Idagence : $user->Idagence;
+            $clientId = $request->Idclient;
+            if (!$clientId) {
+                $client = Client::firstOrCreate(
+                    [
+                        'telephoneClient' => $request->TelephoneExpedit,
+                        'Idagence' => $agenceId,
+                    ],
+                    [
+                        'nomClient' => $request->nomExpediteur,
+                        'emailClient' => null,
+                        'DateInscription' => now(),
+                        'typeClient_ENUM' => 'particulier',
+                        'Idutilisateur' => $user->id,
+                    ]
+                );
+                $clientId = $client->Idclient;
+            }
 
             $data = [
                 'nomExpediteur' => $request->nomExpediteur,
@@ -106,8 +125,8 @@ class ColisController extends Controller
                 'prix' => $request->prix,
                 'devise' => $request->devise ?? 'CDF',
                 'methode_calcul_prix' => $request->methode_calcul_prix ?? 'manuel',
-                'Idclient' => $request->Idclient,
-                'Idagence' => ($user->role_enum === 'superAdmin') ? $request->Idagence : $user->Idagence
+                'Idclient' => $clientId,
+                'Idagence' => $agenceId
             ];
 
             $colis = Colis::create($data);

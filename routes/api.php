@@ -72,6 +72,13 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // 🔁 Activer/Désactiver un compte utilisateur
     Route::put('/admin/users/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+    Route::put('/user/change-password', [UserController::class, 'changePassword']);
+    
+    // =============================================
+    // GESTION DES AGENCES (SuperAdmin)
+    // =============================================
+    Route::put('/agences/{id}/toggle-status', [AgenceController::class, 'toggleStatus']);
+    Route::put('/agences/{id}/update-plan', [AgenceController::class, 'updatePlan']);
     
     // =============================================
     // GESTION DES CHAUFFEURS

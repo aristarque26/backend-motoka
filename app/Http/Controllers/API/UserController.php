@@ -367,8 +367,47 @@ class UserController extends Controller
 
     /**
     /**
- * Activer/Désactiver un compte utilisateur (admin uniquement)
- */
+     * Changer le mot de passe de l'utilisateur connecté
+     */
+    public function changePassword(Request $request)
+    {
+        try {
+            $user = $request->user();
+
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required',
+                'new_password' => 'required|min:6|confirmed',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'message' => 'Le mot de passe actuel est incorrect'
+                ], 422);
+            }
+
+            $user->password = Hash::make($request->new_password);
+            $user->must_change_password = false; // Réinitialiser le flag si présent
+            $user->save();
+
+            return response()->json([
+                'message' => 'Mot de passe mis à jour avec succès'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Activer/Désactiver un compte utilisateur (admin uniquement)
+     */
     public function toggleStatus(Request $request, $id)
     {
         try {

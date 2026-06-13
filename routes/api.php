@@ -57,6 +57,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Gestion des agences (super_admin uniquement)
     Route::apiResource('agences', AgenceController::class);
+    Route::apiResource('abonnements', \App\Http\Controllers\API\AbonnementController::class);
     
     // Gestion des succursales
     Route::apiResource('succursales', \App\Http\Controllers\API\SuccursaleController::class);

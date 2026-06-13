@@ -55,25 +55,22 @@ class SuccursaleController extends Controller
 
         $agenceId = $user->role_enum === 'superAdmin' ? $request->Idagence : $user->Idagence;
 
-        // --- VÉRIFICATION DES LIMITES DU PLAN ---
+        // --- VÉRIFICATION DES LIMITES DU PLAN (DYNAMIQUE) ---
         $agence = \App\Models\Agence::findOrFail($agenceId);
         $currentCount = Succursale::where('Idagence', $agenceId)->count();
         
-        $limits = [
-            'starter' => 3,
-            'business' => 10,
-            'enterprise' => 999
-        ];
-        
         $plan = $agence->plan_enum ?: 'starter';
-        $max = $limits[$plan] ?? 3;
+        
+        // Chercher les limites dans la table abonnements via le slug
+        $abonnement = \App\Models\Abonnement::where('slug', $plan)->first();
+        $max = $abonnement ? $abonnement->max_succursales : 3;
 
         if ($currentCount >= $max) {
             return response()->json([
                 'message' => "Limite de succursales atteinte pour votre plan ({$plan}). Maximum autorisé : {$max}."
             ], 403);
         }
-        // ----------------------------------------
+        // ----------------------------------------------------
 
         $succursale = Succursale::create(array_merge(
             $validator->validated(),

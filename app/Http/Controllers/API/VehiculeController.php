@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Vehicule;
 use App\Http\Resources\VehiculeResource;
 use App\Http\Requests\StoreVehiculeRequest;
-use App\Http\Requests\UpdateVehiculeRequest;
+use App\Http\Requests\UpdateVehiculeRequest; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -48,6 +48,9 @@ class VehiculeController extends Controller
 
         if ($user->role_enum !== 'superAdmin') {
             $query->where('Idagence', $user->Idagence);
+        }
+        if ($request->has('status') && !empty($request->status)) {
+            $query->where('statut_enum', $request->status);
         }
 
         return VehiculeResource::collection($query->paginate(20));

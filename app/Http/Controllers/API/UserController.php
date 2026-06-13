@@ -249,6 +249,17 @@ class UserController extends Controller
             // Determine Idagence
             $agenceId = $this->isSuperAdmin($user) ? $request->Idagence : $user->Idagence;
 
+            if (!$agenceId) {
+                return response()->json(['message' => 'Idagence requis'], 422);
+            }
+
+            // --- VÉRIFICATION LIMITE ---
+            $limitCheck = $this->checkUserLimit($agenceId);
+            if (!$limitCheck['allowed']) {
+                return response()->json(['message' => $limitCheck['message']], 403);
+            }
+            // ---------------------------
+
             // Validate request
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',

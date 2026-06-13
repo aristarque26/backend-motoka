@@ -134,6 +134,31 @@ class UserController extends Controller
     }
 
     /**
+     * Vérifier la limite d'utilisateurs staff pour une agence
+     */
+    private function checkUserLimit($agenceId)
+    {
+        $agence = \App\Models\Agence::findOrFail($agenceId);
+        $plan = $agence->plan_enum ?: 'starter';
+        
+        // Chercher la limite dans la table abonnements
+        $abonnement = \App\Models\Abonnement::where('slug', $plan)->first();
+        $max = $abonnement ? $abonnement->max_utilisateurs : 2;
+
+        // Compter les utilisateurs liés à cette agence (excluant l'admin principal si nécessaire, mais ici on compte tout le staff)
+        $currentCount = User::where('Idagence', $agenceId)->count();
+
+        if ($currentCount >= $max) {
+            return [
+                'allowed' => false,
+                'message' => "Limite d'utilisateurs atteinte pour votre plan ({$plan}). Maximum autorisé : {$max}."
+            ];
+        }
+
+        return ['allowed' => true];
+    }
+
+    /**
      * Créer un dispatcher (admin_agence ou super_admin)
      */
     public function storeDispatcher(Request $request)
@@ -146,16 +171,18 @@ class UserController extends Controller
             }
 
             // Déterminer l'Idagence
-            if ($this->isSuperAdmin($user)) {
-                // Super admin doit fournir Idagence
-                if (!$request->Idagence) {
-                    return response()->json(['message' => 'Idagence requis pour super_admin'], 422);
-                }
-                $agenceId = $request->Idagence;
-            } else {
-                // Admin agence : utiliser son propre Idagence
-                $agenceId = $user->Idagence;
+            $agenceId = $this->isSuperAdmin($user) ? $request->Idagence : $user->Idagence;
+
+            if (!$agenceId) {
+                return response()->json(['message' => 'Idagence requis'], 422);
             }
+
+            // --- VÉRIFICATION LIMITE ---
+            $limitCheck = $this->checkUserLimit($agenceId);
+            if (!$limitCheck['allowed']) {
+                return response()->json(['message' => $limitCheck['message']], 403);
+            }
+            // ---------------------------
 
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:255',

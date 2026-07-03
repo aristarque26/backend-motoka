@@ -20,7 +20,10 @@ class Abonnement extends Model
         'description',
         'prix_mensuel',
         'prix_annuel',
-        'devise'
+        'devise',
+        'max_succursales',
+        'max_vehicules',
+        'max_utilisateurs'
     ];
 
     protected $casts = [

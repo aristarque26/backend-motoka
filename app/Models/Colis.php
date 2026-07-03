@@ -26,6 +26,10 @@ class Colis extends Model
         'Signature_Url',
         'Description',
         'Poids',
+        'prix',
+        'devise',
+        'methode_calcul_prix',
+        'Idpassager',
         'Idclient',
         'Idagence'
     ];
@@ -33,9 +37,15 @@ class Colis extends Model
     protected $casts = [
         'Otp_genere' => 'datetime',
         'Poids' => 'decimal:2',
+        'prix' => 'decimal:2',
     ];
 
     // Relations
+    public function passager()
+    {
+        return $this->belongsTo(Passager::class, 'Idpassager', 'Idpassager');
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class, 'Idclient', 'Idclient');

@@ -39,19 +39,6 @@ class AgenceController extends Controller
         return response()->json($agence);
     }
 
-    /**
-     * Obtenir les informations de l'agence de l'utilisateur connecté
-     */
-    public function getCurrentAgency(Request $request)
-    {
-        $user = $request->user();
-        if (!$user->Idagence) {
-            return response()->json(['message' => 'Utilisateur sans agence'], 404);
-        }
-        $agence = Agence::find($user->Idagence);
-        return response()->json($agence);
-    }
-
     // Créer une agence (super_admin uniquement)
     public function store(Request $request)
     {
@@ -216,7 +203,133 @@ class AgenceController extends Controller
         }
     }
 
-    // Supprimer une agence (super_admin uniquement)
+    // Obtenir les informations de l'agence de l'utilisateur connecte
+    public function getCurrentAgency(Request $request)
+    {
+        try {
+            $user = $request->user();
+            if (!$user->Idagence) {
+                return response()->json([
+                    'success' => true,
+                    'data' => null,
+                    'message' => 'Aucune agence associée'
+                ]);
+            }
+
+            $agence = Agence::with('succursales')->findOrFail($user->Idagence);
+
+            return response()->json([
+                'success' => true,
+                'data' => $agence
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateSettings(Request $request)
+    {
+        try {
+            $user = $request->user();
+            if ($user->role_enum !== 'adminAgence' && $user->role_enum !== 'superAdmin') {
+                return response()->json(['message' => 'Accès non autorisé'], 403);
+            }
+
+            $agence = Agence::findOrFail($user->Idagence);
+            
+            $validator = Validator::make($request->all(), [
+                'nomAgence' => 'sometimes|string|max:255',
+                'nom' => 'sometimes|string|max:255',
+                'adresse' => 'sometimes|string',
+                'telephone' => 'sometimes|string',
+                'email' => 'sometimes|email',
+                'config_prix_km' => 'nullable|numeric',
+                'config_frais_adhesion' => 'nullable|numeric',
+                'config_commission_defaut' => 'nullable|numeric',
+                'logo_url' => 'nullable|string',
+                'couleur_primaire' => 'nullable|string|max:20',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $data = $validator->validated();
+            if (isset($data['nomAgence'])) {
+                $data['nom'] = $data['nomAgence'];
+                unset($data['nomAgence']);
+            }
+
+            $agence->update($data);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Paramètres de l\'agence mis à jour',
+                'data' => $agence
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Activer/Suspendre une agence (super_admin uniquement)
+     */
+    public function toggleStatus(Request $request, $id)
+    {
+        try {
+            $agence = Agence::findOrFail($id);
+            
+            if ($agence->statut_enum === 'actif') {
+                $agence->statut_enum = 'suspendu';
+                $message = "Agence suspendue";
+            } else {
+                $agence->statut_enum = 'actif';
+                $message = "Agence activée";
+            }
+            
+            $agence->save();
+
+            return response()->json([
+                'message' => $message,
+                'agence' => $agence
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Mettre à jour le plan et l'expiration d'une agence
+     */
+    public function updatePlan(Request $request, $id)
+    {
+        try {
+            $agence = Agence::findOrFail($id);
+
+            $validator = Validator::make($request->all(), [
+                'plan_enum' => 'required|in:starter,business,enterprise',
+                'ExpirationDate' => 'nullable|date',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['errors' => $validator->errors()], 422);
+            }
+
+            $agence->update([
+                'plan_enum' => $request->plan_enum,
+                'ExpirationDate' => $request->ExpirationDate,
+            ]);
+
+            return response()->json([
+                'message' => 'Plan mis à jour avec succès',
+                'agence' => $agence
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
+    }
+
     public function destroy($id)
     {
         try {

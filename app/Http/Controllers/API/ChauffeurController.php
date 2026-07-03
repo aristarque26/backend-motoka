@@ -59,7 +59,10 @@ class ChauffeurController extends Controller
                     ->paginate(20);
             }
 
-            return response()->json($chauffeurs);
+            return response()->json([
+                'success' => true,
+                'data' => $chauffeurs
+            ]);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -216,13 +219,28 @@ class ChauffeurController extends Controller
 
             // Mise à jour ou création de la fiche chauffeur
             if ($chauffeurUser->chauffeur) {
+                $oldType = $chauffeurUser->chauffeur->type_contrat;
                 $chauffeurUser->chauffeur->update($request->only([
                     'nomChauffeur', 'telephone', 'adresse', 'numeroPermis',
                     'statut_Enum', 'type_contrat', 'salaireBase', 'commission'
                 ]));
+
+                // Logic for adhesion fee
+                if ($request->type_contrat === 'adherent' && $oldType !== 'adherent') {
+                    \App\Models\TransactionFinance::create([
+                        'montant' => $request->frais_adhesion ?? 50, // Default 50 or from request
+                        'devise' => 'USD',
+                        'mode_paiement_Enum' => $request->mode_paiement ?? 'especes',
+                        'Type_Transaction_Enum' => 'autre',
+                        'description' => 'Frais d\'adhésion chauffeur partenaire',
+                        'Date_Paiement' => now(),
+                        'Idagence' => $chauffeurUser->Idagence,
+                        'Idchauffeur' => $chauffeurUser->chauffeur->Idchauffeur
+                    ]);
+                }
             } else {
                 // Si la fiche n'existe pas encore, on la crée
-                Chauffeur::create([
+                $chauffeur = Chauffeur::create([
                     'nomChauffeur' => $request->nomChauffeur ?? $chauffeurUser->name,
                     'telephone' => $request->telephone ?? $chauffeurUser->telephone,
                     'adresse' => $request->adresse,
@@ -239,6 +257,19 @@ class ChauffeurController extends Controller
                     'Idutilisateur' => $chauffeurUser->id,
                     'Idagence' => $chauffeurUser->Idagence,
                 ]);
+
+                if ($request->type_contrat === 'adherent') {
+                    \App\Models\TransactionFinance::create([
+                        'montant' => $request->frais_adhesion ?? 50,
+                        'devise' => 'USD',
+                        'mode_paiement_Enum' => $request->mode_paiement ?? 'especes',
+                        'Type_Transaction_Enum' => 'autre',
+                        'description' => 'Frais d\'adhésion chauffeur partenaire',
+                        'Date_Paiement' => now(),
+                        'Idagence' => $chauffeurUser->Idagence,
+                        'Idchauffeur' => $chauffeur->Idchauffeur
+                    ]);
+                }
             }
 
             return response()->json([

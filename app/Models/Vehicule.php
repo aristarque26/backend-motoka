@@ -29,6 +29,7 @@ class Vehicule extends Model
         'visiteTech',
         'kilometrage',
         'proprietaire_type',
+        'commission_fixe_course',
         'Idchauffeur',
         'Idagence',
         'Idsuccursale'
@@ -40,6 +41,7 @@ class Vehicule extends Model
         'visiteTech' => 'datetime',
         'CapacitePoids' => 'decimal:2',
         'VolumeBagages' => 'decimal:2',
+        'commission_fixe_course' => 'decimal:2',
     ];
 
     // Relations

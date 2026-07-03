@@ -76,7 +76,11 @@ class ColisController extends Controller
                 'nomDestinateur' => 'required|string|max:50',
                 'Description' => 'nullable|string|max:255',
                 'Poids' => 'required|numeric|min:0.1',
-                'Idclient' => 'required|exists:clients,Idclient',
+                'prix' => 'required|numeric|min:0',
+                'devise' => 'nullable|string|max:5',
+                'methode_calcul_prix' => 'nullable|in:poids,manuel',
+                'Idclient' => 'nullable|exists:clients,Idclient',
+                'Idcource' => 'nullable|exists:courses,Idcource',
                 'statut_enum' => 'nullable|in:enregistre,en_transit,livre,recupere',
                 'Idagence' => $user->role_enum === 'superAdmin' ? 'required|exists:agences,Idagence' : 'nullable'
             ]);
@@ -89,6 +93,25 @@ class ColisController extends Controller
             $codeColis = 'MOT-' . strtoupper(Str::random(8));
             $otp = rand(1000, 9999);
 
+            $agenceId = ($user->role_enum === 'superAdmin') ? $request->Idagence : $user->Idagence;
+            $clientId = $request->Idclient;
+            if (!$clientId) {
+                $client = Client::firstOrCreate(
+                    [
+                        'telephoneClient' => $request->TelephoneExpedit,
+                        'Idagence' => $agenceId,
+                    ],
+                    [
+                        'nomClient' => $request->nomExpediteur,
+                        'emailClient' => null,
+                        'DateInscription' => now(),
+                        'typeClient_ENUM' => 'particulier',
+                        'Idutilisateur' => $user->id,
+                    ]
+                );
+                $clientId = $client->Idclient;
+            }
+
             $data = [
                 'nomExpediteur' => $request->nomExpediteur,
                 'TelephoneExpedit' => $request->TelephoneExpedit,
@@ -99,11 +122,30 @@ class ColisController extends Controller
                 'statut_enum' => $request->statut_enum ?? 'enregistre',
                 'Description' => $request->Description,
                 'Poids' => $request->Poids,
-                'Idclient' => $request->Idclient,
-                'Idagence' => ($user->role_enum === 'superAdmin') ? $request->Idagence : $user->Idagence
+                'prix' => $request->prix,
+                'devise' => $request->devise ?? 'CDF',
+                'methode_calcul_prix' => $request->methode_calcul_prix ?? 'manuel',
+                'Idclient' => $clientId,
+                'Idagence' => $agenceId
             ];
 
             $colis = Colis::create($data);
+
+            // Création d'une transaction financière pour le colis
+            \App\Models\TransactionFinance::create([
+                'montant' => $request->prix,
+                'devise' => $request->devise ?? 'CDF',
+                'mode_paiement_Enum' => $request->mode_paiement ?? 'especes',
+                'Type_Transaction_Enum' => 'colis',
+                'description' => "Enregistrement colis " . $codeColis,
+                'Date_Paiement' => now(),
+                'Idagence' => $data['Idagence']
+            ]);
+
+            // Association directe avec une course
+            if ($request->has('Idcource')) {
+                $colis->courses()->attach($request->Idcource, ['date_transport' => now()]);
+            }
 
             return response()->json([
                 'success' => true,

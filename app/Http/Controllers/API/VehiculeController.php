@@ -58,6 +58,23 @@ class VehiculeController extends Controller
      */
     public function store(StoreVehiculeRequest $request)
     {
+        $user = $request->user();
+        $agenceId = $request->Idagence ?: $user->Idagence;
+
+        // --- VÉRIFICATION DES LIMITES DU PLAN (DYNAMIQUE) ---
+        $agence = \App\Models\Agence::findOrFail($agenceId);
+        $currentCount = Vehicule::where('Idagence', $agenceId)->count();
+        $plan = $agence->plan_enum ?: 'starter';
+        $abonnement = \App\Models\Abonnement::where('slug', $plan)->first();
+        $max = $abonnement ? $abonnement->max_vehicules : 5;
+
+        if ($currentCount >= $max) {
+            return response()->json([
+                'message' => "Limite de véhicules atteinte pour votre plan ({$plan}). Maximum autorisé : {$max}."
+            ], 403);
+        }
+        // ----------------------------------------------------
+
         $vehicule = Vehicule::create($request->validated());
 
         return (new VehiculeResource($vehicule))

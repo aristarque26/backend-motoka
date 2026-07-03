@@ -16,14 +16,21 @@ class SuccursaleController extends Controller
 
     public function index(Request $request)
     {
-        $user = $request->user();
-        $query = Succursale::with('manager');
+        try {
+            $user = $request->user();
+            $query = Succursale::with('manager');
 
-        if ($user->role_enum !== 'superAdmin') {
-            $query->where('Idagence', $user->Idagence);
+            if ($user->role_enum !== 'superAdmin') {
+                $query->where('Idagence', $user->Idagence);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $query->get()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
-
-        return response()->json($query->get());
     }
 
     public function store(Request $request)
@@ -47,6 +54,23 @@ class SuccursaleController extends Controller
         }
 
         $agenceId = $user->role_enum === 'superAdmin' ? $request->Idagence : $user->Idagence;
+
+        // --- VÉRIFICATION DES LIMITES DU PLAN (DYNAMIQUE) ---
+        $agence = \App\Models\Agence::findOrFail($agenceId);
+        $currentCount = Succursale::where('Idagence', $agenceId)->count();
+        
+        $plan = $agence->plan_enum ?: 'starter';
+        
+        // Chercher les limites dans la table abonnements via le slug
+        $abonnement = \App\Models\Abonnement::where('slug', $plan)->first();
+        $max = $abonnement ? $abonnement->max_succursales : 3;
+
+        if ($currentCount >= $max) {
+            return response()->json([
+                'message' => "Limite de succursales atteinte pour votre plan ({$plan}). Maximum autorisé : {$max}."
+            ], 403);
+        }
+        // ----------------------------------------------------
 
         $succursale = Succursale::create(array_merge(
             $validator->validated(),

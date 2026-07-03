@@ -15,9 +15,12 @@ class Course extends Model
 
     protected $fillable = [
         'nomCourse',
+        'type_course',
+        'Iditinerary',
         'departureTime',
         'passengers',
         'load',
+        'poids_total',
         'AdresseDepart',
         'LatitudeDepart',
         'LongitudeDepart',
@@ -41,6 +44,7 @@ class Course extends Model
 
     protected $casts = [
         'departureTime' => 'datetime',
+        'poids_total' => 'decimal:2',
         'LatitudeDepart' => 'decimal:8',
         'LongitudeDepart' => 'decimal:8',
         'LatitudeArrivee' => 'decimal:8',
@@ -61,9 +65,19 @@ class Course extends Model
     }
 
     // Relations
+    public function itinerary()
+    {
+        return $this->belongsTo(Itinerary::class, 'Iditinerary', 'Iditinerary');
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class, 'Idclient', 'Idclient');
+    }
+
+    public function passagers()
+    {
+        return $this->hasMany(Passager::class, 'Idcource', 'Idcource');
     }
 
     public function chauffeur()

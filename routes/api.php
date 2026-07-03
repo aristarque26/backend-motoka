@@ -9,6 +9,8 @@ use App\Http\Controllers\API\ChauffeurController;
 use App\Http\Controllers\API\VehiculeController;
 use App\Http\Controllers\API\CourseControlleur;
 use App\Http\Controllers\API\ColisController;
+use App\Http\Controllers\API\ItineraryController;
+use App\Http\Controllers\API\PassagerController;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -51,9 +53,11 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Informations sur l'agence actuelle
     Route::get('/agence', [AgenceController::class, 'getCurrentAgency']);
+    Route::put('/agence/settings', [AgenceController::class, 'updateSettings']);
 
     // Gestion des agences (super_admin uniquement)
     Route::apiResource('agences', AgenceController::class);
+    Route::apiResource('abonnements', \App\Http\Controllers\API\AbonnementController::class);
     
     // Gestion des succursales
     Route::apiResource('succursales', \App\Http\Controllers\API\SuccursaleController::class);
@@ -69,6 +73,13 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // 🔁 Activer/Désactiver un compte utilisateur
     Route::put('/admin/users/{id}/toggle-status', [UserController::class, 'toggleStatus']);
+    Route::put('/user/change-password', [UserController::class, 'changePassword']);
+    
+    // =============================================
+    // GESTION DES AGENCES (SuperAdmin)
+    // =============================================
+    Route::put('/agences/{id}/toggle-status', [AgenceController::class, 'toggleStatus']);
+    Route::put('/agences/{id}/update-plan', [AgenceController::class, 'updatePlan']);
     
     // =============================================
     // GESTION DES CHAUFFEURS
@@ -109,6 +120,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('vehicules', VehiculeController::class);
     Route::apiResource('courses', CourseControlleur::class);
     Route::apiResource('colis', ColisController::class);
+    Route::apiResource('itineraries', ItineraryController::class);
+    Route::apiResource('passagers', PassagerController::class);
+    Route::apiResource('transactions-finances', \App\Http\Controllers\API\TransactionFinanceController::class);
     
     // Dashboard (optionnel)
     Route::get('/dashboard', function () {

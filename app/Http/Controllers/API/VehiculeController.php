@@ -46,8 +46,19 @@ class VehiculeController extends Controller
 
         $query = Vehicule::with('agence', 'succursale');
 
+        // Filtre agence
+
         if ($user->role_enum !== 'superAdmin') {
             $query->where('Idagence', $user->Idagence);
+        }
+
+        // Filtre statut 
+        if ($request->filled('statut_enum')) {
+            $request->validate([
+                'statut_enum' => 'in:disponible,en_mission,maintenance,hors_service',
+            ]);
+
+            $query->where('statut_enum', $request->statut_enum);
         }
 
         return VehiculeResource::collection($query->paginate(20));
